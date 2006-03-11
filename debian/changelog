@@ -1,0 +1,11 @@
+orange-pl (0.20060211-1) unstable; urgency=low
+
+  * Architecture: any -> all
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Sat, 11 Mar 2006 16:18:16 +0100
+
+orange-pl (0.20060211) unstable; urgency=low
+
+  * Initial release.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Sat, 11 Feb 2006 19:50:04 +0100
