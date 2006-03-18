@@ -56,7 +56,7 @@ close CONF;
 
 debug "Username: $username\@orange.pl";
 
-my $action = 'S';
+my $action = 's';
 if ($#ARGV >= 0 && $ARGV[0] =~ /^-[A-Za-z]$/)
 {
   $action = shift @ARGV;
@@ -77,9 +77,9 @@ sub complete_net
   return "$_\@$net";
 }
 
-if ($action eq 'S')
+if ($action eq 'S' || $action eq 's')
 {
-  quit 'Invalid arguments: exactly 2 argument required' if $#ARGV != 1;
+  quit 'Invalid arguments: exactly 2 arguments required' if $#ARGV != 1;
 
   require I18N::Langinfo; import I18N::Langinfo qw(langinfo CODESET);
   require Encode; import Encode qw(decode encode);
@@ -94,7 +94,7 @@ if ($action eq 'S')
    
   $number =~ s/^\+48//;
   $number =~ s/^00//;
-  my $grep = ($number !~ /^[0-9]{9}$/);
+  my $grep = $number !~ /^[0-9]{9,11}$/;
   my ($fnumber, $fname);
   open PHONEBOOK, '<:encoding(UTF-8)', $ENV{'PHONEBOOK'} or quit 'Can\'t open the phonebook';
   flock PHONEBOOK, LOCK_SH or quit 'Can\'t lock the phonebook';
@@ -112,12 +112,14 @@ if ($action eq 'S')
     }
   }
   close PHONEBOOK;
+  $found = !$grep if $action eq 'S';
   quit 'Invalid argument: no such recipient' unless $found;
+  $fnumber = $number unless defined $fnumber;
   chomp $fnumber;
   $number = $fnumber;
   $fnumber = complete_net $fnumber;
-  $fname = encode($codeset, $fname);
-  debug "Recipient: $fname <$fnumber>";
+  $fname = (defined $fname) ? (' ' . encode($codeset, $fname)) : '';
+  debug "Recipient:$fname <$fnumber>";
 
   my $pid = open3(\*MESSAGE, \*MESSAGE_ASCII, undef, '/usr/bin/konwert', 'utf8-ascii') or quit 'Can\'t invoke `konwert\'';
   $message = encode('UTF-8', $message);
@@ -133,6 +135,7 @@ if ($action eq 'S')
   $message_len = length $message;
   debug "Message length: $message_len";
   quit "Message too long ($message_len > 640)" if $message_len > 640;
+  $action = 'S';
 }
 elsif ($action ne 'c' && $action ne 'i' && $action ne 'l')
 {

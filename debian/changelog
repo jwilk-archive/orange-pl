@@ -1,3 +1,9 @@
+orange-pl (0.20060218) unstable; urgency=low
+
+  * Action -S does not require valid phonebook entry.
+ 
+ -- Jakub Wilk <ubanus@users.sf.net>  Sat, 18 Mar 2006 13:59:43 +0100
+
 orange-pl (0.20060211-1) unstable; urgency=low
 
   * Architecture: any -> all
