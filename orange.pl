@@ -196,22 +196,25 @@ elsif ($action eq 'i')
   $pn =~ s/ //g;
   my $rates = $info[6];
   my $recv = $info[16];
-  $recv =~ s/^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) .*$/$3-$2-$1/;
+  $recv =~ s/^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*$/$3-$2-$1/;
+  my $recvd = $4;
   my $dial = $info[11];
-  $dial =~ s/^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) .*$/$3-$2-$1/;
+  $dial =~ s/^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*$/$3-$2-$1/;
+  my $diald = $4;
   my $balance = $info[18];
-  $balance =~ s/^ *([0-9]*),([0-9]*) .*$/$1.$2 PLN/;
+  $balance =~ s/^ *([0-9]*),([0-9]*) .*$/$1.$2/;
+  my $balanced = sprintf '%.2f', (0.0 + $balance) / $diald;
   print 
     "Phone number: $pn\n" .
     "Rates: $rates\n" .
-    "Receiving calls till: $recv\n" .
-    "Dialing calls till: $dial\n" .
-    "Balance: $balance\n";
+    "Receiving calls till: $recv ($recvd days)\n" .
+    "Dialing calls till: $dial ($diald days)\n" .
+    "Balance: $balance PLN ($balanced PLN per day)\n";
 }
 elsif ($action eq 'l')
 {
   require I18N::Langinfo; import I18N::Langinfo qw(langinfo CODESET);
-  require Encode; import Encode qw(from_to);
+  require Encode; import Encode qw(encode from_to);
 
   my $codeset = langinfo(CODESET()) or die;
   debug "Codeset: $codeset";
@@ -246,14 +249,15 @@ elsif ($action eq 'l')
     my $cnumber = shift @list;
     my $cnumber2 = complete_net $cnumber;
     my $cname = $cnumber;
-    $cname = "$phonebook{$cnumber} <$cnumber2>" if exists $phonebook{$cnumber};
+    $cname = encode($codeset, "$phonebook{$cnumber} <$cnumber2>", 'UTF-8') if exists $phonebook{$cnumber};
     my $text = shift @list;
     from_to($text, 'UTF-8', $codeset);
     my $date = shift @list;
     $date =~ s/ /, /;
     my $status = shift @list;
     $status = 'sent' if $status =~ /^wys/; 
-    $status = 'awaiting' if $status =~ /^oczekuje/; 
+    $status = 'awaiting' if $status =~ /^ocz/; 
+    $status = 'delivered' if $status =~ /^dos/; 
     print "To: $cname\nDate: $date\nStatus: $status\nContents: $text\n\n";
   }
 }
