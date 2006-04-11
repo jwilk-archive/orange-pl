@@ -7,5 +7,5 @@ Standards-Version: 3.6.2
 
 Package: orange-pl
 Architecture: all
-Depends: perl, libwww-perl, libcrypt-ssleay-perl, konwert
+Depends: perl, libwww-perl, libcrypt-ssleay-perl, libhtml-parser-perl, konwert
 Description: Send SMs via orange.pl gateway

@@ -6,7 +6,7 @@ use warnings;
 use HTTP::Request::Common qw(GET POST);
 use HTTP::Cookies qw();
 use LWP::UserAgent qw();
-use Crypt::SSLeay;
+use Crypt::SSLeay qw();
 use Fcntl qw(:flock :DEFAULT);
 
 sub debug 
@@ -152,20 +152,15 @@ unless ($res->content =~ /zalogowany jako/i)
 {
   debug 'Logging in...';
   my $uri = 'https://www.orange.pl/portal/map/map/signin?_DARGS=/gear/static/signIn.jsp';
+  my $a = '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler';
   $req = POST $uri, 
     [
-      '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.login' => ' ',
-      '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.login.x' => 0,
-      '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.login.y' => 0,
-      '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.loginErrorURL' => 'http://www.orange.pl/portal/map/map/signin',
-      '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.loginSuccessURL' => 'http://www.orange.pl/portal/map/map/pim',
-      '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.value.login' => $username,
-      '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.value.password' => $password,
-      '_D:/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.login' => ' ',
-      '_D:/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.loginErrorURL' => ' ',
-      '_D:/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.loginSuccessURL' => ' ',
-      '_D:/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.value.login' => ' ',
-      '_D:/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler.value.password' => ' ',
+      "$a.login" => ' ', "$a.login.x" => 0, "$a.login.y" => 0,
+      "$a.loginErrorURL" => 'http://www.orange.pl/portal/map/map/signin',
+      "$a.loginSuccessURL" => 'http://www.orange.pl/portal/map/map/pim',
+      "$a.value.login" => $username, "$a.value.password" => $password,
+      "_D:$a.login" => ' ', "_D:$a.loginErrorURL" => ' ', "_D:$a.loginSuccessURL" => ' ',
+      "_D:$a.value.login" => ' ', "_D:$a.value.password" => ' ',
       '_DARGS' => '/gear/static/signIn.jsp',
       '_dyncharset' => 'UTF-8'
     ];
@@ -215,6 +210,7 @@ elsif ($action eq 'l')
 {
   require I18N::Langinfo; import I18N::Langinfo qw(langinfo CODESET);
   require Encode; import Encode qw(encode from_to);
+  require HTML::Entities; import HTML::Entities qw(decode_entities);
 
   my $codeset = langinfo(CODESET()) or die;
   debug "Codeset: $codeset";
@@ -251,6 +247,7 @@ elsif ($action eq 'l')
     my $cname = $cnumber;
     $cname = encode($codeset, "$phonebook{$cnumber} <$cnumber2>", 'UTF-8') if exists $phonebook{$cnumber};
     my $text = shift @list;
+    decode_entities($text);
     from_to($text, 'UTF-8', $codeset);
     my $date = shift @list;
     $date =~ s/ /, /;
@@ -267,22 +264,17 @@ elsif ($action eq 'S')
   visit 'http://www.orange.pl/portal/map/map/message_box?mbox_view=newsms&mbox_edit=new';
   debug 'Ready to send...';
   my $uri = 'http://www.orange.pl/portal/map/map/message_box??_DARGS=/gear/mapmessagebox/smsform.jsp';
+  my $a = '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler';
   $req = POST $uri, 
     [
       '_dyncharset' => 'UTF-8',
-      '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.body' => $message,
-      '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.create.x' => 0,
-      '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.create.y' => 0,
-      '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.errorURL' => '/portal/map/map/message_box?mbox_view=newsms',
-      '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.successURL' => '/portal/map/map/message_box?mbox_view=messageslist',
-      '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.to' => $number,
-      '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.type' => 'sms',
-      '_D:/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.body' => ' ',
-      '_D:/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.create' => ' ',
-      '_D:/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.errorURL'  => ' ',
-      '_D:/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.successURL' => ' ',
-      '_D:/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.to' => ' ',
-      '_D:/amg/ptk/map/messagebox/formhandlers/MessageFormHandler.type' => ' ',
+      "$a.body" => $message,
+      "$a.create.x" => 0, "$a.create.y" => 0,
+      "$a.errorURL" => '/portal/map/map/message_box?mbox_view=newsms',
+      "$a.successURL" => '/portal/map/map/message_box?mbox_view=messageslist',
+      "$a.to" => $number, "$a.type" => 'sms',
+      "_D:$a.body" => ' ', "_D:$a.create" => ' ', "_D:$a.errorURL"  => ' ', 
+      "_D:$a.successURL" => ' ', "_D:$a.to" => ' ', "_D:$a.type" => ' ',
       '_DARGS' => '/gear/mapmessagebox/smsform.jsp',
       'counter' => 640 - $message_len
     ];

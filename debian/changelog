@@ -1,3 +1,9 @@
+orange-pl (0.20060411) unstable; urgency=low
+
+  * Action -l: decode HTML entities.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Tue, 11 Apr 2006 10:45:33 +0200
+
 orange-pl (0.20060407) unstable; urgency=low
 
   * Action -l: correct encoding conversion;
