@@ -26,8 +26,8 @@ sub api_error { quit 'API error'; }
 sub extract_remaining
 {
   $_ = shift;
-  return int($1) + int($2) if /SMSy darmowe:.*?>([0-9]+)<.*SMSy z do.*?>([0-9]+)</s;
-  return int($1) if /SMSy darmowe:.*?>([0-9]+)</s;
+  return int($1) + int($2) if />SMSy<:.*?>darmowe:.*?>([0-9]+)<.*>z do.*?>([0-9]+)</s;
+  return int($1) if />SMSy:<.*?>darmowe:.*?>([0-9]+)</s;
   quit 'Can\'t extract number of remaining messages';
 }
 

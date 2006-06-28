@@ -1,3 +1,9 @@
+orange-pl (0.20060628) unstable; urgency=low
+
+  * Follow the API change.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Wed, 28 Jun 2006 11:05:36 +0200
+
 orange-pl (0.20060411) unstable; urgency=low
 
   * Action -l: decode HTML entities.
