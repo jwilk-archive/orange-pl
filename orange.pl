@@ -104,7 +104,7 @@ if ($action eq 'S' || $action eq 's')
     next unless /^[^#]/;
     my ($cname, $place, $cnumber, $tmp) = split /\t/;
     next unless defined($place);
-    next unless $place eq '*';
+    next unless $place eq '*' or $place eq '<mbox>';
     if (($grep && index($cname, $number) >= 0) || (!$grep && $cnumber == $number))
     {
       quit 'Invalid argument: ambiguous recipient' if $found++;
@@ -137,7 +137,7 @@ if ($action eq 'S' || $action eq 's')
   quit "Message too long ($message_len > 640)" if $message_len > 640;
   $action = 'S';
 }
-elsif ($action ne 'c' && $action ne 'i' && $action ne 'l')
+elsif ($action !~ '^[cilm]$')
 {
   quit "Unknow action: $action";
 }
@@ -182,31 +182,37 @@ elsif ($action eq 'i')
 {
   $res = visit 'http://online.orange.pl/portal/ecare';
   $_ = $res->content;
-  api_error unless m{<div id="tblList3">(.*?)</div>}s;
+  s/\s+/ /g;
+  api_error unless m{<div id="tblList3">(.*?)</div>};
   $_ = $1;
-  y/\n\r\t/   /;
-  s/ +/ /g;
-  my @info = m{<td.*?>(.*?)</td>}g;
+  my @info = m{<td.*?>(.*?)</td>}sg;
+  $_ = join "\n", @info;
+  api_error unless $#info >= 17;
   my $pn = $info[1];
   $pn =~ s/ //g;
-  my $rates = $info[6];
-  my $recv = $info[16];
-  $recv =~ s/^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*$/$3-$2-$1/;
+  my $rates = $info[5];
+  $rates =~ s/^ +//g;
+  $rates =~ s/ +$//g;
+  my $recv = $info[15];
+  api_error unless $recv =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
+  $recv =~ s//$3-$2-$1/;
   my $recvd = $4;
-  my $dial = $info[11];
-  $dial =~ s/^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*$/$3-$2-$1/;
+  my $dial = $info[10];
+  api_error unless $dial =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
+  $dial =~ s//$3-$2-$1/;
   my $diald = $4;
-  my $balance = $info[18];
-  $balance =~ s/^ *([0-9]*),([0-9]*) .*$/$1.$2/;
+  my $balance = $info[17];
+  api_error unless $balance =~ /^ *([0-9]+),([0-9]+) .*$/;
+  $balance =~ s//$1.$2/;
   my $balanced = sprintf '%.2f', (0.0 + $balance) / $diald;
   print 
-    "Phone number: $pn\n" .
-    "Rates: $rates\n" .
-    "Receiving calls till: $recv ($recvd days)\n" .
-    "Dialing calls till: $dial ($diald days)\n" .
+    "Phone number: $pn\n",
+    "Rates: $rates\n",
+    "Receiving calls till: $recv ($recvd days)\n",
+    "Dialing calls till: $dial ($diald days)\n",
     "Balance: $balance PLN ($balanced PLN per day)\n";
 }
-elsif ($action eq 'l')
+elsif ($action eq 'l' || $action eq 'm')
 {
   require I18N::Langinfo; import I18N::Langinfo qw(langinfo CODESET);
   require Encode; import Encode qw(encode from_to);
@@ -215,12 +221,14 @@ elsif ($action eq 'l')
   my $codeset = langinfo(CODESET()) or die;
   debug "Codeset: $codeset";
 
-  $res = visit 'http://www.orange.pl/portal/map/map/message_box?mbox_view=sentmessageslist';
+  my $pg;
+  $pg = 'sentmessageslist' if $action eq 'l';
+  $pg = 'messageslist' if $action eq 'm';
+  $res = visit 'http://www.orange.pl/portal/map/map/message_box?mbox_view=' . $pg;
   $_ = $res->content;
-  api_error unless m{<table id="list">(.*?)</table>}s;
+  s/\s+/ /g;
+  api_error unless m{<table id="list">(.*?)</table>};
   $_ = $1;
-  y/\n\r\t/   /;
-  s/ +/ /g;
   s{<thead>.*?</thead>}{};
   s{<tfoot>.*?</tfoot>}{};
   s{</?a.*?>}{}g;
@@ -234,12 +242,12 @@ elsif ($action eq 'l')
     next unless /^[^#]/;
     my ($cname, $place, $cnumber, $tmp) = split /\t/;
     next unless defined($place);
-    next unless $place eq '*';
+    next unless $place eq '*' or $place eq '<mbox>';
     $phonebook{$cnumber} = $cname;
   }
   close PHONEBOOK;
-
-  while ($#list >= 5)
+  
+  while ($#list >= 4)
   {
     shift @list; shift @list;
     my $cnumber = shift @list;
@@ -251,11 +259,18 @@ elsif ($action eq 'l')
     from_to($text, 'UTF-8', $codeset);
     my $date = shift @list;
     $date =~ s/ /, /;
-    my $status = shift @list;
-    $status = 'sent' if $status =~ /^wys/; 
-    $status = 'awaiting' if $status =~ /^ocz/; 
-    $status = 'delivered' if $status =~ /^dos/; 
-    print "To: $cname\nDate: $date\nStatus: $status\nContents: $text\n\n";
+    my $hdr = 'To';
+    $hdr = 'From' if $action eq 'm';
+    print "$hdr: $cname\nDate: $date\n";
+    if ($action eq 'l')
+    {
+      my $status = shift @list;
+      $status = 'sent' if $status =~ /^wys/; 
+      $status = 'awaiting' if $status =~ /^ocz/; 
+      $status = 'delivered' if $status =~ /^dos/;
+      print "Status: $status\n";
+    }
+    print "Contents: $text\n\n";
   }
 }
 elsif ($action eq 'S')

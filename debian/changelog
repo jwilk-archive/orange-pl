@@ -1,3 +1,10 @@
+orange-pl (0.20060712) unstable; urgency=low
+
+  * Action -i: Follow the API change.
+  * New action: -m.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Wed, 12 Jul 2006 11:36:14 +0200
+
 orange-pl (0.20060628) unstable; urgency=low
 
   * Follow the API change.
