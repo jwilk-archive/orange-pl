@@ -1,3 +1,16 @@
+orange-pl (0.20060714) unstable; urgency=low
+
+  * Manual page.
+  * Disable debug by default.
+  * New options: --help (-h), --version, --debug.
+  * Change file names:
+    - "$HOME/.orange/" -> "$HOME/.orange-pl/",
+    - 'orange.conf' -> 'orange-pl.conf'.
+    - 'orange-cookie-jar.txt' -> 'orange-pl-cookie-jar.txt'.
+  * Change environmental variable name: 'ORANGE_HOME' -> 'ORANGEPL_HOME'.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Fri, 14 Jul 2006 13:41:04 +0200
+
 orange-pl (0.20060712) unstable; urgency=low
 
   * Action -i: Follow the API change.

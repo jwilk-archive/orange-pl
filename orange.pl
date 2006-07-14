@@ -8,66 +8,13 @@ use HTTP::Cookies qw();
 use LWP::UserAgent qw();
 use Crypt::SSLeay qw();
 use Fcntl qw(:flock :DEFAULT);
+use Getopt::Long qw(:config gnu_getopt no_ignore_case);
+use Pod::Usage qw(pod2usage);
 
-sub debug 
-{ 
-  my $debug = 1;
-  printf STDERR "%s\n", shift if $debug; 
-}
-
-sub quit
-{
-  printf STDERR "%s\n", shift;
-  exit 1;
-}
-
+sub quit { printf STDERR "%s\n", shift; exit 1; }
 sub api_error { quit 'API error'; }
 
-sub extract_remaining
-{
-  $_ = shift;
-  return int($1) + int($2) if />SMSy<:.*?>darmowe:.*?>([0-9]+)<.*>z do.*?>([0-9]+)</s;
-  return int($1) if />SMSy:<.*?>darmowe:.*?>([0-9]+)</s;
-  quit 'Can\'t extract number of remaining messages';
-}
-
-my $orange_home =  exists $ENV{'ORANGE_HOME'} ? $ENV{'ORANGE_HOME'} : "$ENV{'HOME'}/.orange/";
-chdir $orange_home or quit "Can\'t change working directory to $orange_home";
-
-my $ua = new LWP::UserAgent;
-$ua->timeout(30);
-$ua->agent('Mozilla/4.7 [en] (WinNT; I)');
-$ua->env_proxy();
-$ua->cookie_jar(HTTP::Cookies->new(file => './orange-cookie-jar.txt', autosave => 1, ignore_discard => 1));
-
-sub visit 
-{
-  my $uri = shift;
-  my $res = $ua->request(GET $uri);
-  quit "Can\'t open $uri" unless $res->is_success;
-  return $res;
-}
-
-open CONF, '<', './orange.conf' or quit 'Can\'t open the configuration file';
-flock CONF, LOCK_SH or quit 'Can\'t lock the configuration file';
-my $username = <CONF>; chomp $username;
-my $password = <CONF>; chomp $password;
-close CONF;
-
-debug "Username: $username\@orange.pl";
-
-my $action = 's';
-if ($#ARGV >= 0 && $ARGV[0] =~ /^-[A-Za-z]$/)
-{
-  $action = shift @ARGV;
-  substr $action, 0, 1, '';
-}
-
-my $number;
-my $message;
-my $message_len;
-
-sub complete_net
+sub gsm_complete_net
 {
   $_ = shift;
   my $net = 'invalid';
@@ -77,15 +24,68 @@ sub complete_net
   return "$_\@$net";
 }
 
+sub lwp_init
+{
+  my $ua = new LWP::UserAgent;
+  $ua->timeout(30);
+  $ua->agent('Mozilla/4.7 [en] (WinNT; I)');
+  $ua->env_proxy();
+  $ua->cookie_jar(HTTP::Cookies->new(file => './orange-pl-cookie-jar.txt', autosave => 1, ignore_discard => 1));
+  push @{$ua->requests_redirectable}, 'POST';
+  return $ua;
+}
+
+sub lwp_visit
+{
+  my $ua = shift;
+  my $uri = shift;
+  my $res = $ua->request(GET $uri);
+  quit "Can\'t open $uri" unless $res->is_success;
+  return $res;
+}
+
+our $VERSION = '0.20060714';
+my $debug = 0;
+my $action = 's';
+GetOptions(
+  'send|s' =>       sub { $action = 's'; },
+  'force-send|S' => sub { $action = 'S'; },
+  'count|c' =>      sub { $action = 'c'; },
+  'info|i' =>       sub { $action = 'i'; },
+  'list-sent|l' =>  sub { $action = 'l'; },
+  'list-inbox|m' => sub { $action = 'm'; },
+  'version' =>      sub { quit "orange.pl $VERSION"; },
+  'debug' =>        \$debug,
+  'help|h|?' =>     sub { pod2usage(1); }
+) or pod2usage(2);
+
+my $orange_home =  exists $ENV{'ORANGEPL_HOME'} ? $ENV{'ORANGEPL_HOME'} : "$ENV{'HOME'}/.orange-pl/";
+chdir $orange_home or quit "Can\'t change working directory to $orange_home";
+
+sub debug { printf STDERR "%s\n", shift if $debug; };
+
+my $ua = lwp_init;
+
+open CONF, '<', './orange-pl.conf' or quit 'Can\'t open the configuration file';
+flock CONF, LOCK_SH or quit 'Can\'t lock the configuration file';
+my $username = <CONF>; chomp $username;
+my $password = <CONF>; chomp $password;
+close CONF;
+
+debug "Username: $username\@orange.pl";
+
+my $number;
+my $message;
+my $message_len;
+
 if ($action eq 'S' || $action eq 's')
 {
-  quit 'Invalid arguments: exactly 2 arguments required' if $#ARGV != 1;
+  pod2usage(1) if $#ARGV != 1;
 
   require I18N::Langinfo; import I18N::Langinfo qw(langinfo CODESET);
   require Encode; import Encode qw(decode encode);
   require IPC::Open3; import IPC::Open3 qw(open3);
   require Text::Wrap; import Text::Wrap qw(wrap);
-
   my $codeset = langinfo(CODESET()) or die;
   debug "Codeset: $codeset";
 
@@ -117,11 +117,11 @@ if ($action eq 'S' || $action eq 's')
   $fnumber = $number unless defined $fnumber;
   chomp $fnumber;
   $number = $fnumber;
-  $fnumber = complete_net $fnumber;
+  $fnumber = gsm_complete_net $fnumber;
   $fname = (defined $fname) ? (' ' . encode($codeset, $fname)) : '';
   debug "Recipient:$fname <$fnumber>";
 
-  my $pid = open3(\*MESSAGE, \*MESSAGE_ASCII, undef, '/usr/bin/konwert', 'utf8-ascii') or quit 'Can\'t invoke `konwert\'';
+  my $pid = open3(\*MESSAGE, \*MESSAGE_ASCII, undef, '/usr/bin/konwert', 'utf8-ascii') or quit q{Can't invoke `konwert'};
   $message = encode('UTF-8', $message);
   print MESSAGE $message;
   close MESSAGE;
@@ -142,12 +142,10 @@ elsif ($action !~ '^[cilm]$')
   quit "Unknow action: $action";
 }
 
-push @{$ua->requests_redirectable}, 'POST';
-
 my $req;
 my $res;
 
-$res = visit 'http://www.orange.pl/portal/map/map/signin';
+$res = lwp_visit $ua, 'http://www.orange.pl/portal/map/map/signin';
 unless ($res->content =~ /zalogowany jako/i)
 {
   debug 'Logging in...';
@@ -171,7 +169,15 @@ unless ($res->content =~ /zalogowany jako/i)
 }
 debug 'Logged in!';
 
-$res = visit 'http://www.orange.pl/portal/map/map/message_box';
+sub extract_remaining
+{
+  $_ = shift;
+  return int($1) + int($2) if />SMSy<:.*?>darmowe:.*?>([0-9]+)<.*>z do.*?>([0-9]+)</s;
+  return int($1) if />SMSy:<.*?>darmowe:.*?>([0-9]+)</s;
+  quit q{Can't extract number of remaining messages};
+}
+
+$res = lwp_visit $ua, 'http://www.orange.pl/portal/map/map/message_box';
 my $remaining = extract_remaining $res->content;
 if ($action eq 'c')
 {
@@ -180,7 +186,7 @@ if ($action eq 'c')
 }
 elsif ($action eq 'i')
 {
-  $res = visit 'http://online.orange.pl/portal/ecare';
+  $res = lwp_visit $ua, 'http://online.orange.pl/portal/ecare';
   $_ = $res->content;
   s/\s+/ /g;
   api_error unless m{<div id="tblList3">(.*?)</div>};
@@ -224,7 +230,7 @@ elsif ($action eq 'l' || $action eq 'm')
   my $pg;
   $pg = 'sentmessageslist' if $action eq 'l';
   $pg = 'messageslist' if $action eq 'm';
-  $res = visit 'http://www.orange.pl/portal/map/map/message_box?mbox_view=' . $pg;
+  $res = lwp_visit $ua, 'http://www.orange.pl/portal/map/map/message_box?mbox_view=' . $pg;
   $_ = $res->content;
   s/\s+/ /g;
   api_error unless m{<table id="list">(.*?)</table>};
@@ -235,8 +241,8 @@ elsif ($action eq 'l' || $action eq 'm')
   my @list = m{<td.*?>(.*?)</td>}g;
 
   my %phonebook;
-  open PHONEBOOK, '<:encoding(UTF-8)', $ENV{'PHONEBOOK'} or quit 'Can\' open the phonebook';
-  flock PHONEBOOK, LOCK_SH or quit 'Can\'t lock the phonebook';
+  open PHONEBOOK, '<:encoding(UTF-8)', $ENV{'PHONEBOOK'} or quit q{Can't open the phonebook};
+  flock PHONEBOOK, LOCK_SH or quit q{Can't lock the phonebook};
   while (<PHONEBOOK>)
   {
     next unless /^[^#]/;
@@ -251,7 +257,7 @@ elsif ($action eq 'l' || $action eq 'm')
   {
     shift @list; shift @list;
     my $cnumber = shift @list;
-    my $cnumber2 = complete_net $cnumber;
+    my $cnumber2 = gsm_complete_net $cnumber;
     my $cname = $cnumber;
     $cname = encode($codeset, "$phonebook{$cnumber} <$cnumber2>", 'UTF-8') if exists $phonebook{$cnumber};
     my $text = shift @list;
@@ -276,7 +282,7 @@ elsif ($action eq 'l' || $action eq 'm')
 elsif ($action eq 'S')
 {
   quit 'Message limit exceeded' if $remaining == 0;
-  visit 'http://www.orange.pl/portal/map/map/message_box?mbox_view=newsms&mbox_edit=new';
+  lwp_visit $ua, 'http://www.orange.pl/portal/map/map/message_box?mbox_view=newsms&mbox_edit=new';
   debug 'Ready to send...';
   my $uri = 'http://www.orange.pl/portal/map/map/message_box??_DARGS=/gear/mapmessagebox/smsform.jsp';
   my $a = '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler';
@@ -303,6 +309,52 @@ elsif ($action eq 'S')
   print "Number of remaining messages: $remaining_after\n";
 }
 
-# Written mainly on 21 Jan 2006
+__END__
+
+=head1 NAME
+
+orange.pl -- send SMs via orange.pl gateway
+
+=head1 SYNOPSIS
+
+=over 4
+
+=item orange -s I<[phonebook-entry]> I<[text]>
+
+=item orange -S I<[phone-number]> I<[text]>
+
+=item orange -c
+
+=item orange -l
+
+=item orange -m
+
+=item orange -i
+
+=head1 ENVIRONMENT
+
+ORANGE_HOME (default: F<$HOME/.orange-pl/>)
+
+=head1 FILES
+
+=over 4
+
+=item F<$ORANGEPL_HOME/orange-pl.conf>
+
+=item F<$ORANGEPL_HOME/orange-pl-cookie-jar.txt>
+
+=item F<$ORANGEPL_HOME/phonebook>
+
+=back
+
+=head1 AUTHOR
+
+Written by Jakub Wilk <ubanus@users.sf.net>, mainly on 21 Jan 2006.
+
+=head1 COPYRIGHT
+
+You may redistribute copies of B<orange-pl> under the terms of the GNU General Public License, version 2.
+
+=cut
 
 # vim:ts=2 sw=2 et
