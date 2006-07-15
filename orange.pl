@@ -104,7 +104,7 @@ if ($action eq 'S' || $action eq 's')
     next unless /^[^#]/;
     my ($cname, $place, $cnumber, $tmp) = split /\t/;
     next unless defined($place);
-    next unless $place eq '*' or $place eq '<mbox>';
+    next unless $place eq '*';
     if (($grep && index($cname, $number) >= 0) || (!$grep && $cnumber == $number))
     {
       quit 'Invalid argument: ambiguous recipient' if $found++;
@@ -241,17 +241,23 @@ elsif ($action eq 'l' || $action eq 'm')
   my @list = m{<td.*?>(.*?)</td>}g;
 
   my %phonebook;
-  open PHONEBOOK, '<:encoding(UTF-8)', $ENV{'PHONEBOOK'} or quit q{Can't open the phonebook};
-  flock PHONEBOOK, LOCK_SH or quit q{Can't lock the phonebook};
-  while (<PHONEBOOK>)
+  if (open PHONEBOOK, '<:encoding(UTF-8)', $ENV{'PHONEBOOK'})
   {
-    next unless /^[^#]/;
-    my ($cname, $place, $cnumber, $tmp) = split /\t/;
-    next unless defined($place);
-    next unless $place eq '*' or $place eq '<mbox>';
-    $phonebook{$cnumber} = $cname;
+    flock PHONEBOOK, LOCK_SH or quit q{Can't lock the phonebook};
+    while (<PHONEBOOK>)
+    {
+      next unless /^[^#]/;
+      my ($cname, $place, $cnumber, $tmp) = split /\t/;
+      next unless defined($place);
+      next unless $place eq '*' or $place eq '<mbox>';
+      $phonebook{$cnumber} = $cname;
+    }
+    close PHONEBOOK;
   }
-  close PHONEBOOK;
+  else 
+  {
+    debug q{Can't open the phonebook};
+  }
   
   while ($#list >= 4)
   {
@@ -319,9 +325,9 @@ orange.pl -- send SMs via orange.pl gateway
 
 =over 4
 
-=item orange -s I<[phonebook-entry]> I<[text]>
+=item orange [-s] I<< <phonebook-entry> >> I<< <text> >>
 
-=item orange -S I<[phone-number]> I<[text]>
+=item orange -S I<< <phone-number> >> I<< <text> >>
 
 =item orange -c
 
@@ -330,6 +336,8 @@ orange.pl -- send SMs via orange.pl gateway
 =item orange -m
 
 =item orange -i
+
+=back
 
 =head1 ENVIRONMENT
 
@@ -341,15 +349,27 @@ ORANGE_HOME (default: F<$HOME/.orange-pl/>)
 
 =item F<$ORANGEPL_HOME/orange-pl.conf>
 
+The configuration file is in the following format:
+
+I<[login-name]>  I<[password]>
+
+where fields are newline-separated.
+
 =item F<$ORANGEPL_HOME/orange-pl-cookie-jar.txt>
 
 =item F<$ORANGEPL_HOME/phonebook>
+
+The phonebook is consisted of lines in the following format:
+
+I<[personal-name]>  I<[place]>  I<[phone-number]>
+
+where fields are tab-separated; I<[place]> must be set to C<*> for a cellular phone number, or to C<< <mbox> >> for a mbox phone number.
 
 =back
 
 =head1 AUTHOR
 
-Written by Jakub Wilk <ubanus@users.sf.net>, mainly on 21 Jan 2006.
+Written by Jakub Wilk E<lt>ubanus@users.sf.netE<gt>, mainly on 21 Jan 2006.
 
 =head1 COPYRIGHT
 

@@ -1,3 +1,10 @@
+orange-pl (0.20060715) unstable; urgency=low
+
+  * Document 'orange-pl.conf' and 'phonebook' file formats.
+  * Actions -l, -m: don't require the phonebook to be available.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Sat, 15 Jul 2006 10:42:48 +0200
+
 orange-pl (0.20060714) unstable; urgency=low
 
   * Manual page.
@@ -8,6 +15,8 @@ orange-pl (0.20060714) unstable; urgency=low
     - 'orange.conf' -> 'orange-pl.conf'.
     - 'orange-cookie-jar.txt' -> 'orange-pl-cookie-jar.txt'.
   * Change environmental variable name: 'ORANGE_HOME' -> 'ORANGEPL_HOME'.
+  * Action -s: resolve phone numbers using phoneboook entries with 'place'
+    field set to '<mbox>'.
 
  -- Jakub Wilk <ubanus@users.sf.net>  Fri, 14 Jul 2006 13:41:04 +0200
 
