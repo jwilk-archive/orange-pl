@@ -4,8 +4,9 @@ Priority: optional
 Maintainer: Jakub Wilk <ubanus@users.sf.net>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.6.2
+Bugs: mailto:ubanus@users.sf.net
 
 Package: orange-pl
 Architecture: all
-Depends: perl, libwww-perl, libcrypt-ssleay-perl, libhtml-parser-perl, konwert
+Depends: ${perl:Depends}, libwww-perl, libcrypt-ssleay-perl, libhtml-parser-perl, konwert
 Description: Send SMs via orange.pl gateway

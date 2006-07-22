@@ -11,8 +11,22 @@ use Fcntl qw(:flock :DEFAULT);
 use Getopt::Long qw(:config gnu_getopt no_ignore_case);
 use Pod::Usage qw(pod2usage);
 
+my $debug = 0;
+
 sub quit { printf STDERR "%s\n", shift; exit 1; }
-sub api_error { quit 'API error'; }
+
+sub api_error 
+{ 
+  my $message = 'API error';
+  if ($debug)
+  {
+    my $code = shift;
+    $message .= " (code: $code)";
+  }
+  quit $message; 
+}
+
+sub debug { printf STDERR "%s\n", shift if $debug; };
 
 sub gsm_complete_net
 {
@@ -40,12 +54,11 @@ sub lwp_visit
   my $ua = shift;
   my $uri = shift;
   my $res = $ua->request(GET $uri);
-  quit "Can\'t open $uri" unless $res->is_success;
+  quit "Can't open $uri" unless $res->is_success;
   return $res;
 }
 
 our $VERSION = '0.20060714';
-my $debug = 0;
 my $action = 's';
 GetOptions(
   'send|s' =>       sub { $action = 's'; },
@@ -57,17 +70,16 @@ GetOptions(
   'version' =>      sub { quit "orange.pl $VERSION"; },
   'debug' =>        \$debug,
   'help|h|?' =>     sub { pod2usage(1); }
-) or pod2usage(2);
+) or pod2usage(1);
 
-my $orange_home =  exists $ENV{'ORANGEPL_HOME'} ? $ENV{'ORANGEPL_HOME'} : "$ENV{'HOME'}/.orange-pl/";
-chdir $orange_home or quit "Can\'t change working directory to $orange_home";
+my $orange_home = exists $ENV{'ORANGEPL_HOME'} ? $ENV{'ORANGEPL_HOME'} : "$ENV{'HOME'}/.orange-pl/";
+chdir $orange_home or quit "Can't change working directory to $orange_home";
 
-sub debug { printf STDERR "%s\n", shift if $debug; };
 
 my $ua = lwp_init;
 
-open CONF, '<', './orange-pl.conf' or quit 'Can\'t open the configuration file';
-flock CONF, LOCK_SH or quit 'Can\'t lock the configuration file';
+open CONF, '<', './orange-pl.conf' or quit q(Can't open the configuration file);
+flock CONF, LOCK_SH or quit q(Can't lock the configuration file);
 my $username = <CONF>; chomp $username;
 my $password = <CONF>; chomp $password;
 close CONF;
@@ -96,8 +108,8 @@ if ($action eq 'S' || $action eq 's')
   $number =~ s/^00//;
   my $grep = $number !~ /^[0-9]{9,11}$/;
   my ($fnumber, $fname);
-  open PHONEBOOK, '<:encoding(UTF-8)', $ENV{'PHONEBOOK'} or quit 'Can\'t open the phonebook';
-  flock PHONEBOOK, LOCK_SH or quit 'Can\'t lock the phonebook';
+  open PHONEBOOK, '<:encoding(UTF-8)', $ENV{'PHONEBOOK'} or quit q(Can't open the phonebook);
+  flock PHONEBOOK, LOCK_SH or quit q(Can't lock the phonebook);
   my $found = 0;
   while (<PHONEBOOK>)
   {
@@ -172,9 +184,14 @@ debug 'Logged in!';
 sub extract_remaining
 {
   $_ = shift;
-  return int($1) + int($2) if />SMSy<:.*?>darmowe:.*?>([0-9]+)<.*>z do.*?>([0-9]+)</s;
-  return int($1) if />SMSy:<.*?>darmowe:.*?>([0-9]+)</s;
-  quit q{Can't extract number of remaining messages};
+  if (m{<div id="syndication">(.*?)</div>}s)
+  {
+    $_ = $1;
+    my $sum = 0;
+    $sum += $1 while m{<span class="value">([0-9]+)</span>}sg;
+    return $sum;
+  }
+  api_error 'x1';
 }
 
 $res = lwp_visit $ua, 'http://www.orange.pl/portal/map/map/message_box';
@@ -189,26 +206,27 @@ elsif ($action eq 'i')
   $res = lwp_visit $ua, 'http://online.orange.pl/portal/ecare';
   $_ = $res->content;
   s/\s+/ /g;
-  api_error unless m{<div id="tblList3">(.*?)</div>};
+  api_error 'i1' unless m{<div id="tbl-list3">.*?<table>(.*?)</table>};
   $_ = $1;
   my @info = m{<td.*?>(.*?)</td>}sg;
   $_ = join "\n", @info;
-  api_error unless $#info >= 17;
+  api_error 'i2.' . $#info unless $#info >= 13;
   my $pn = $info[1];
   $pn =~ s/ //g;
-  my $rates = $info[5];
+  api_error 'i6' unless $pn =~ '^[0-9]+$';
+  my $rates = $info[4];
   $rates =~ s/^ +//g;
   $rates =~ s/ +$//g;
-  my $recv = $info[15];
-  api_error unless $recv =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
+  my $recv = $info[10];
+  api_error 'i3' unless $recv =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
   $recv =~ s//$3-$2-$1/;
   my $recvd = $4;
-  my $dial = $info[10];
-  api_error unless $dial =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
+  my $dial = $info[7];
+  api_error 'i4' unless $dial =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
   $dial =~ s//$3-$2-$1/;
   my $diald = $4;
-  my $balance = $info[17];
-  api_error unless $balance =~ /^ *([0-9]+),([0-9]+) .*$/;
+  my $balance = $info[13];
+  api_error 'i5' unless $balance =~ /^ *([0-9]+),([0-9]+) .*$/;
   $balance =~ s//$1.$2/;
   my $balanced = sprintf '%.2f', (0.0 + $balance) / $diald;
   print 
@@ -233,7 +251,7 @@ elsif ($action eq 'l' || $action eq 'm')
   $res = lwp_visit $ua, 'http://www.orange.pl/portal/map/map/message_box?mbox_view=' . $pg;
   $_ = $res->content;
   s/\s+/ /g;
-  api_error unless m{<table id="list">(.*?)</table>};
+  api_error 'l1' unless m{<table id="list">(.*?)</table>};
   $_ = $1;
   s{<thead>.*?</thead>}{};
   s{<tfoot>.*?</tfoot>}{};
@@ -312,7 +330,7 @@ elsif ($action eq 'S')
   my $remaining_after = extract_remaining $res->content;
   quit 'Error while sending the message, I guess...' unless $remaining_after < $remaining;
   debug 'Looks OK';
-  print "Number of remaining messages: $remaining_after\n";
+  debug "Number of remaining messages: $remaining_after\n";
 }
 
 __END__
@@ -341,7 +359,7 @@ orange.pl -- send SMs via orange.pl gateway
 
 =head1 ENVIRONMENT
 
-ORANGE_HOME (default: F<$HOME/.orange-pl/>)
+ORANGEPL_HOME (default: F<$HOME/.orange-pl/>)
 
 =head1 FILES
 

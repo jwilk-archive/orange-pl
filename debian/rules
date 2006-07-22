@@ -1,11 +1,10 @@
 #!/usr/bin/make -f
 
-build: build-stamp
+build: orange.pl.1
 
-build-stamp:
+orange.pl.1: orange.pl
 	dh_testdir
-	pod2man orange.pl > orange.pl.1
-	touch $(@)
+	pod2man -c '' $(<) > $(@)
 
 clean:
 	dh_testdir
@@ -21,18 +20,20 @@ install: build
 	dh_installman --language=C orange.pl.1
 
 binary-indep: build install
-
-binary-arch: build install
 	dh_testdir
 	dh_testroot
+	dh_installdocs
 	dh_installchangelogs 
 	dh_compress
 	dh_fixperms
 	dh_installdeb
+	dh_perl
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
+
+binary-arch: build install
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure
