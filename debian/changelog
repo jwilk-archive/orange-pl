@@ -1,7 +1,29 @@
+orange-pl (1:0.3) unstable; urgency=low
+
+  * Completely new configuration file
+  * Drop phonebook support (use external programs instead: 'Person2Number',
+    'Number2Person' configuration options)
+  * Drop '--debug' option (use 'Debug' configuration option instead)
+  * Actions '-s' and '-S' does not differ any more (use 'RejectUnpersons'
+    configuration option or '--force' option instead)
+  * Change file names:
+    - 'orange-pl-cookie-jar.txt' -> 'cookie-jar.txt'
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Thu, 27 Jul 2006 12:03:28 +0200
+
+orange-pl (0.20060725) unstable; urgency=low
+
+  * Actions -l, -m: allow limit the number of displayed messages
+  * Actions -l, -m: allow to show the full message title with --expand option
+  * Fix typos in the manual page
+  * Slightly clean up some code
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Tue, 25 Jul 2006 08:28:50 +0200
+
 orange-pl (0.20060722) unstable; urgency=low
 
   * Follow the API changes.
-  * Action -s, -S: display information about the remaining messages on if
+  * Action -s, -S: display information about the remaining messages only if
     debug in enabled.
   * More verbose 'API error' errors.
 

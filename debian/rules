@@ -4,7 +4,7 @@ build: orange.pl.1
 
 orange.pl.1: orange.pl
 	dh_testdir
-	pod2man -c '' $(<) > $(@)
+	pod2man -c 'orange-pl manual' $(<) > $(@)
 
 clean:
 	dh_testdir
@@ -15,20 +15,19 @@ install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
-	dh_installdirs usr/bin
 	dh_install orange.pl usr/bin
 	dh_installman --language=C orange.pl.1
 
 binary-indep: build install
 	dh_testdir
 	dh_testroot
-	dh_installdocs
 	dh_installchangelogs 
+	dh_installdocs
+	dh_installexamples $(wildcard *.conf)
 	dh_compress
 	dh_fixperms
-	dh_installdeb
 	dh_perl
-	dh_shlibdeps
+	dh_installdeb
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
