@@ -1,3 +1,11 @@
+orange-pl (1:0.4) unstable; urgency=low
+
+  * Make 'RejectUnperson' and 'UseSSL' configuration options actually work.
+  * New configuration option: 'UseBell'.
+  * Action '-i': deal with an API weirdness to make it more reliable.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Tue, 22 Aug 2006 09:24:07 +0200
+
 orange-pl (1:0.3) unstable; urgency=low
 
   * Completely new configuration file

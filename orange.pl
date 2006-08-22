@@ -4,63 +4,69 @@ use strict;
 use warnings;
 
 use HTTP::Request::Common qw(GET POST);
-use HTTP::Cookies ();
-use LWP::UserAgent ();
-use Crypt::SSLeay ();
-use Fcntl qw(:flock :DEFAULT);
 use Getopt::Long qw(:config gnu_getopt no_ignore_case);
 use Pod::Usage qw(pod2usage);
 use Apache::ConfigFile ();
 
-our $VERSION = '0.20060727';
+our $VERSION = '0.4';
 my $site = 'orange.pl';
-my $cookie_domain = '.orange.pl';
 my $software_name = 'orange-pl';
 my $config_file = 'orange-pl.conf';
+
 my $debug = 0;
+my $use_bell = 0;
 my $person2number;
 my $number2person;
 my $reject_unpersons = 0;
 
-sub quit { printf STDERR "%s\n", shift; exit 1; }
+sub quit(;$)
+{
+  my ($message) = @_;
+  print STDERR "\a" if $use_bell;
+  print STDERR "$message\n" if defined $message;
+  exit 1; 
+}
 
-sub error
+sub error($$)
 {
   my ($message, $code) = @_;
   $message .= " ($code)" if $debug;
   quit $message; 
 }
 
-sub api_error { error 'API error', "code: $_[0]"; }
+sub api_error($) { error 'API error', "code: $_[0]"; }
 
-sub http_error { error 'HTTP error', $_[0] }
+sub http_error($) { error 'HTTP error', $_[0] }
 
-sub debug { printf STDERR "%s\n", shift if $debug; };
+sub debug($) { print STDERR "$_[0]\n" if $debug; };
 
-sub lwp_init
+sub lwp_init()
 {
+  require LWP::UserAgent;
+  require HTTP::Cookies;
+  require Crypt::SSLeay;
   my $ua = new LWP::UserAgent;
   $ua->timeout(30);
   $ua->agent('Mozilla/5.0');
   $ua->env_proxy();
-  $ua->cookie_jar(HTTP::Cookies->new(file => './cookie-jar.txt', autosave => 1, ignore_discard => 1));
+  $ua->cookie_jar(new HTTP::Cookies(file => './cookie-jar.txt', autosave => 1, ignore_discard => 1));
   push @{$ua->requests_redirectable}, 'POST';
   return $ua;
 }
 
-sub expand_tilde
+sub expand_tilde($)
 {
   ($_) = @_;
   s{^~([^/]*)}{length $1 > 0 ? (getpwnam($1))[7] : ( $ENV{'HOME'} || $ENV{'LOGDIR'} )}e;
   return $_;
 }
 
-sub transliterate
+sub transliterate($)
 {
-  require IPC::Open3; import IPC::Open3 qw(open3);
+  require IPC::Open3;
   local $/;
   my ($text) = @_;
-  my $pid = open3(\*TEXT, \*TEXT_ASCII, undef, '/usr/bin/konwert', 'utf8-ascii') or quit q{Can't invoke `konwert'};
+  my $pid = IPC::Open3::open3(\*TEXT, \*TEXT_ASCII, undef, '/usr/bin/konwert', 'utf8-ascii') or quit q{Can't invoke `konwert'};
   binmode(TEXT, ':encoding(utf-8)');
   print TEXT $text;
   close TEXT;
@@ -70,14 +76,14 @@ sub transliterate
   return $text;
 }
 
-sub codeset
+sub codeset()
 {
   require I18N::Langinfo; import I18N::Langinfo qw(langinfo CODESET);
   my $codeset = langinfo(CODESET()) or die;
   return $codeset;
 }
 
-sub resolve_number
+sub resolve_number($)
 {
   my ($number) = @_;
   if (defined $number2person)
@@ -92,7 +98,7 @@ sub resolve_number
   return "<$number>";
 }
 
-sub resolve_recipient
+sub resolve_recipient($)
 {
   my ($number, $recipient);
   ($recipient) = @_;
@@ -109,7 +115,7 @@ sub resolve_recipient
     {
       print STDERR "Ambiguous recipient, please make up your mind:\n";
       print STDERR "  $_" foreach @phonebook;
-      exit 1;
+      quit;
     }
     else
     {
@@ -137,18 +143,31 @@ sub lwp_visit
   return $res;
 }
 
+use constant
+{
+  ACTION_VOID => 0,
+  ACTION_SEND => 1,
+  ACTION_COUNT => 2,
+  ACTION_INBOX => 3,
+  ACTION_SENT => 4,
+  ACTION_INFO => 5,
+  ACTION_LOGOUT => 99,
+  COOKIE_DOMAIN => '.orange.pl'
+};
+
 my $list_limit;
 my $list_expand;
-my $action = 's';
+my $action = ACTION_SEND;
 my $force = 0;
 GetOptions(
-  'send|s|S' =>       sub { $action = 's'; },
-  'count|c' =>        sub { $action = 'c'; },
-  'logout' =>         sub { $action = '0'; },
-  'info|i' =>         sub { $action = 'i'; },
-  'list-sent|l:i'  => sub { $action = 'l'; ($_, $list_limit) = @_; },
-  'list-inbox|m:i' => sub { $action = 'm'; ($_, $list_limit) = @_; },
+  'send|s|S' =>       sub { $action = ACTION_SEND; },
+  'count|c' =>        sub { $action = ACTION_COUNT; },
+  'list-inbox|m:i' => sub { $action = ACTION_INBOX; ($_, $list_limit) = @_; },
+  'list-sent|l:i'  => sub { $action = ACTION_SENT; ($_, $list_limit) = @_; },
+  'info|i' =>         sub { $action = ACTION_INFO; },
   'expand' =>         \$list_expand,
+  'logout' =>         sub { $action = ACTION_LOGOUT; },
+  'void' =>           sub { $action = ACTION_VOID; },
   'force' =>          \$force,
   'version' =>        sub { quit "$software_name, version $VERSION"; },
   'debug' =>          \$debug,
@@ -180,17 +199,19 @@ my %conf_vars =
     { $password = shift; },
   'password64' => sub
     { 
-      use MIME::Base64 ();
+      require MIME::Base64;
       $password = MIME::Base64::decode(shift);
     },
   'number2person' => sub 
     { $number2person = expand_tilde(shift); },
   'person2number' => sub 
     { $person2number = expand_tilde(shift); },
-  'reject_unpersons' => sub 
-    { $reject_unpersons = parse_yes_no(shift); },
+  'rejectunpersons' => sub 
+    { $reject_unpersons = shift; },
   'debug' => sub 
     { $debug = shift; },
+  'usebell' => sub
+    { $use_bell = shift; }
 );
 
 my $ac = Apache::ConfigFile->read(file => $config_file, ignore_case => 1, fix_booleans => 1, raise_error => 1);
@@ -207,40 +228,42 @@ $reject_unpersons = 0 if $force;
 quit 'No login name provided' unless length $login > 0;
 quit 'No password provided' unless defined $password;
 
-
 debug "Login: $login\@$site";
 
 my $number;
 my $body;
 my $body_len;
 
-
-if ($action eq 's')
+if ($action == ACTION_SEND)
 {
   pod2usage(1) if $#ARGV != 1;
 
-  require Encode; import Encode qw(encode decode);
-  require Text::Wrap; import Text::Wrap qw(wrap);
+  require Encode;
+  require Text::Wrap;
   my $codeset = codeset();
   debug "Codeset: $codeset";
   binmode STDERR, ":encoding($codeset)";
   binmode STDOUT, ":encoding($codeset)";
   
   (my $recipient, $body) = @ARGV;
-  $recipient = decode($codeset, $recipient);
-  $body = decode($codeset, $body);
+  $recipient = Encode::decode($codeset, $recipient);
+  $body = Encode::decode($codeset, $body);
   ($number, $recipient) = resolve_recipient $recipient;
   debug "Recipient: $recipient";
-  $body = transliterate($body); 
-  debug "Message: \n" . wrap("  ", "  ", $body);
+  $body = transliterate($body);
+  debug "Message: \n" . Text::Wrap::wrap("  ", "  ", $body);
   $body_len = length $body;
   debug "Message length: $body_len";
   quit "Message too long ($body_len > 640)" if $body_len > 640;
 }
-elsif ($action eq '0')
+elsif ($action == ACTION_LOGOUT)
 {
-  $ua->cookie_jar->clear($cookie_domain);
+  $ua->cookie_jar->clear(COOKIE_DOMAIN);
   debug 'Cookies has been purged';
+  exit;
+}
+elsif ($action == ACTION_VOID)
+{
   exit;
 }
 
@@ -286,11 +309,11 @@ sub extract_remaining
 
 $res = lwp_visit $ua, 'http://www.orange.pl/portal/map/map/message_box';
 my $remaining = extract_remaining $res->content;
-if ($action eq 'c')
+if ($action == ACTION_COUNT)
 {
   print "Number of remaining messages: $remaining\n";
 }
-elsif ($action eq 'i')
+elsif ($action == ACTION_INFO)
 {
   my $uri = 'http://online.orange.pl/portal/ecare';
   $res = lwp_visit $ua, $uri;
@@ -298,25 +321,23 @@ elsif ($action eq 'i')
   s/\s+/ /g;
   api_error 'i1' unless m{<div id="tbl-list3">.*?<table>(.*?)</table>};
   $_ = $1;
-  my @info = m{<td.*?>(.*?)</td>}sg;
-  $_ = join "\n", @info;
-  api_error 'i2.' . $#info unless $#info >= 13;
-  my $pn = $info[1];
+  my ($pn, $rates, $dial, $recv, $balance) = m{<td class="value(?:-orange)??">(.*?)</td>}sg;
+  defined $pn or api_error 'if0d';
   $pn =~ s/ //g;
-  api_error 'i6' unless $pn =~ '^[0-9]+$';
-  my $rates = $info[4];
+  $pn =~ '^[0-9]+$' or api_error 'if0';
+  defined $rates or api_error 'if1d';
   $rates =~ s/^ +//g;
   $rates =~ s/ +$//g;
-  my $recv = $info[10];
-  api_error 'i3' unless $recv =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
+  defined $recv or api_error 'if3d';
+  $recv =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or api_error 'if3';
   $recv =~ s//$3-$2-$1/;
   my $recvd = $4;
-  my $dial = $info[7];
-  api_error 'i4' unless $dial =~ /^ *do ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) \(([0-9]+).*/;
+  defined $dial or api_error 'if2d';
+  $dial =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or api_error 'if2';
   $dial =~ s//$3-$2-$1/;
   my $diald = $4;
-  my $balance = $info[13];
-  api_error 'i5' unless $balance =~ /^ *([0-9]+),([0-9]+) .*$/;
+  defined $balance or api_error 'if4d';
+  $balance =~ /^ *([0-9]+),([0-9]+) .*$/ or api_error 'if4';
   $balance =~ s//$1.$2/;
   my $balanced = sprintf '%.2f', (0.0 + $balance) / $diald;
   print 
@@ -326,7 +347,7 @@ elsif ($action eq 'i')
     "Dialing calls till: $dial ($diald days)\n",
     "Balance: $balance PLN ($balanced PLN per day)\n";
 }
-elsif ($action eq 'l' || $action eq 'm')
+elsif ($action == ACTION_SENT || $action == ACTION_INBOX)
 {
   require Encode; import Encode qw(decode);
   require HTML::Entities; import HTML::Entities qw(decode_entities);
@@ -336,8 +357,8 @@ elsif ($action eq 'l' || $action eq 'm')
   binmode STDOUT, ":encoding($codeset)";
 
   my $pg;
-  $pg = 'sentmessageslist' if $action eq 'l';
-  $pg = 'messageslist' if $action eq 'm';
+  $pg = 'sentmessageslist' if $action == ACTION_SENT;
+  $pg = 'messageslist' if $action == ACTION_INBOX;
   $res = lwp_visit $ua, "http://www.orange.pl/portal/map/map/message_box?mbox_view=$pg";
   $_ = $res->content;
   s/\s+/ /g;
@@ -361,9 +382,9 @@ elsif ($action eq 'l' || $action eq 'm')
     my $date = shift @list;
     $date =~ s/ /, /;
     my $hdr = 'To';
-    $hdr = 'From' if $action eq 'm';
+    $hdr = 'From' if $action == ACTION_INBOX;
     print "$hdr: $cname\nDate: $date\n";
-    if ($action eq 'l')
+    if ($action == ACTION_SENT)
     {
       my $status = shift @list;
       $status = 'sent' if $status =~ /^wys/; 
@@ -385,7 +406,7 @@ elsif ($action eq 'l' || $action eq 'm')
     $list_limit--;
   }
 }
-elsif ($action eq 's')
+elsif ($action == ACTION_SEND)
 {
   quit 'Message limit exceeded' if $remaining == 0;
   my $newmsg_uri = 'http://www.orange.pl/portal/map/map/message_box?mbox_view=newsms&mbox_edit=new';
@@ -426,7 +447,7 @@ orange.pl -- send SMs via orange.pl gateway
 
 =over 4
 
-=item orange.pl [-s] [--force] I<< <phonebook-entry> >> I<< <text> >>
+=item orange.pl [-s] [--force] I<< <phone-number> >> I<< <text> >>
 
 =item orange.pl -c
 

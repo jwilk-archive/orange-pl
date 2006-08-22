@@ -9,7 +9,7 @@ orange.pl.1: orange.pl
 clean:
 	dh_testdir
 	dh_testroot
-	dh_clean 
+	dh_clean orange.pl.1
 
 install: build
 	dh_testdir
