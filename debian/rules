@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
 
+configure: ;
+
 build: orange.pl.1
 
 orange.pl.1: orange.pl
@@ -9,14 +11,14 @@ orange.pl.1: orange.pl
 clean:
 	dh_testdir
 	dh_testroot
-	dh_clean orange.pl.1
+	dh_clean $(wildcard *.1)
 
 install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
 	dh_install orange.pl usr/bin
-	dh_installman --language=C orange.pl.1
+	dh_installman --language=C $(wildcard *.1)
 
 binary-indep: build install
 	dh_testdir

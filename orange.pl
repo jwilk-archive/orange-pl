@@ -6,9 +6,8 @@ use warnings;
 use HTTP::Request::Common qw(GET POST);
 use Getopt::Long qw(:config gnu_getopt no_ignore_case);
 use Pod::Usage qw(pod2usage);
-use Apache::ConfigFile ();
 
-our $VERSION = '0.4';
+our $VERSION = '0.5';
 my $site = 'orange.pl';
 my $software_name = 'orange-pl';
 my $config_file = 'orange-pl.conf';
@@ -36,7 +35,7 @@ sub error($$)
 
 sub api_error($) { error 'API error', "code: $_[0]"; }
 
-sub http_error($) { error 'HTTP error', $_[0] }
+sub http_error($) { error 'HTTP error', $_[0]; }
 
 sub debug($) { print STDERR "$_[0]\n" if $debug; };
 
@@ -45,7 +44,7 @@ sub lwp_init()
   require LWP::UserAgent;
   require HTTP::Cookies;
   require Crypt::SSLeay;
-  my $ua = new LWP::UserAgent;
+  my $ua = new LWP::UserAgent();
   $ua->timeout(30);
   $ua->agent('Mozilla/5.0');
   $ua->env_proxy();
@@ -66,6 +65,7 @@ sub transliterate($)
   require IPC::Open3;
   local $/;
   my ($text) = @_;
+  $text ne '' or return '';
   my $pid = IPC::Open3::open3(\*TEXT, \*TEXT_ASCII, undef, '/usr/bin/konwert', 'utf8-ascii') or quit q{Can't invoke `konwert'};
   binmode(TEXT, ':encoding(utf-8)');
   print TEXT $text;
@@ -98,11 +98,11 @@ sub resolve_number($)
   return "<$number>";
 }
 
-sub resolve_recipient($)
+sub resolve_person($)
 {
   my ($number, $recipient);
   ($recipient) = @_;
-  if ($recipient =~ /[^+0-9]/ and defined $person2number)
+  if ($recipient =~ /[^+\d]/ and defined $person2number)
   {
     open P2N, '-|:encoding(utf-8)', $person2number, $recipient or quit q(Can't invoke resolver);
     my @phonebook = <P2N>;
@@ -126,7 +126,7 @@ sub resolve_recipient($)
   {
     $number = $recipient;
   }
-  quit 'No such recipient' unless $number =~ /^(\+48)?([0-9]{9})$|^([0-9]{11})$/;
+  quit 'No such recipient' unless $number =~ /^(?:\+?48)?(\d{9})$|^(\d{11})$/;
   $number = $3 if defined $3;
   $number = $2 if defined $2;
   $recipient = resolve_number($number);
@@ -141,6 +141,13 @@ sub lwp_visit
   my $res = $ua->request(GET $uri);
   http_error $uri unless $res->is_success;
   return $res;
+}
+
+sub number_of_days($)
+{
+  ($_) = @_;
+  $_ = int ($_);
+  return "$_ day" . ($_ == 1 ? '' : 's');
 }
 
 use constant
@@ -159,13 +166,15 @@ my $list_limit;
 my $list_expand;
 my $action = ACTION_SEND;
 my $force = 0;
+my $folder = 'INBOX';
 GetOptions(
   'send|s|S' =>       sub { $action = ACTION_SEND; },
   'count|c' =>        sub { $action = ACTION_COUNT; },
   'list-inbox|m:i' => sub { $action = ACTION_INBOX; ($_, $list_limit) = @_; },
   'list-sent|l:i'  => sub { $action = ACTION_SENT; ($_, $list_limit) = @_; },
-  'info|i' =>         sub { $action = ACTION_INFO; },
   'expand' =>         \$list_expand,
+  'folder=s' =>       \$folder,
+  'info|i' =>         sub { $action = ACTION_INFO; },
   'logout' =>         sub { $action = ACTION_LOGOUT; },
   'void' =>           sub { $action = ACTION_VOID; },
   'force' =>          \$force,
@@ -175,9 +184,10 @@ GetOptions(
 ) or pod2usage(1);
 if (defined $list_limit)
 {
-  pod2usage(1) unless $list_limit =~ /^[0-9]{1,4}$/;
+  pod2usage(1) unless $list_limit =~ /^\d{1,4}$/;
   $list_limit = 9999 if $list_limit == 0;
 }
+pod2usage(1) unless $folder =~ /^\w+$/;
 
 my $env = $software_name;
 $env =~ s/\W//g;
@@ -191,7 +201,23 @@ my $ua = lwp_init();
 my $login = '';
 my $password;
 
-my %conf_vars = 
+sub read_config(%)
+{
+  require Apache::ConfigFile;
+  my (%conf_vars) = @_;
+  my $ac = Apache::ConfigFile->read(file => $config_file, ignore_case => 1, fix_booleans => 1, raise_error => 1);
+  foreach my $context (($ac, scalar $ac->cmd_context(site => $site)))
+  {
+    next unless $context =~ /\D/;
+    foreach my $var (keys %conf_vars)
+    {
+      my $val = $context->cmd_config($var);
+      $conf_vars{$var}($val) if defined $val;
+    }
+  }
+}
+
+read_config 
 (
   'login' => sub 
     { $login = shift; },
@@ -213,16 +239,6 @@ my %conf_vars =
   'usebell' => sub
     { $use_bell = shift; }
 );
-
-my $ac = Apache::ConfigFile->read(file => $config_file, ignore_case => 1, fix_booleans => 1, raise_error => 1);
-foreach my $context (($ac, $ac->cmd_context(site => $site)))
-{
-  foreach my $var (keys %conf_vars)
-  {
-    my $val = $context->cmd_config($var);
-    $conf_vars{$var}($val) if defined $val;
-  }
-}
 
 $reject_unpersons = 0 if $force;
 quit 'No login name provided' unless length $login > 0;
@@ -248,7 +264,7 @@ if ($action == ACTION_SEND)
   (my $recipient, $body) = @ARGV;
   $recipient = Encode::decode($codeset, $recipient);
   $body = Encode::decode($codeset, $body);
-  ($number, $recipient) = resolve_recipient $recipient;
+  ($number, $recipient) = resolve_person $recipient;
   debug "Recipient: $recipient";
   $body = transliterate($body);
   debug "Message: \n" . Text::Wrap::wrap("  ", "  ", $body);
@@ -301,8 +317,9 @@ sub extract_remaining
   {
     $_ = $1;
     my $sum = 0;
-    $sum += $1 while m{<span class="value">([0-9]+)</span>}sg;
-    return $sum;
+    my $n = 0;
+    $sum += $1, $n++ while m{<span class="value">(\d+)</span>}sg;
+    return $sum if $n > 0;
   }
   api_error 'x1';
 }
@@ -324,28 +341,43 @@ elsif ($action == ACTION_INFO)
   my ($pn, $rates, $dial, $recv, $balance) = m{<td class="value(?:-orange)??">(.*?)</td>}sg;
   defined $pn or api_error 'if0d';
   $pn =~ s/ //g;
-  $pn =~ '^[0-9]+$' or api_error 'if0';
+  $pn =~ '^\d+$' or api_error 'if0';
   defined $rates or api_error 'if1d';
   $rates =~ s/^ +//g;
   $rates =~ s/ +$//g;
   defined $recv or api_error 'if3d';
-  $recv =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or api_error 'if3';
-  $recv =~ s//$3-$2-$1/;
-  my $recvd = $4;
+  if ($recv =~ /^ *-/)
+  {
+    $recv = ': disabled';
+  }
+  else
+  {
+    $recv =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or api_error 'if3';
+    $recv = " till: $3-$2-$1 (" . number_of_days($4) . ' left)';
+  }
   defined $dial or api_error 'if2d';
-  $dial =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or api_error 'if2';
-  $dial =~ s//$3-$2-$1/;
-  my $diald = $4;
+  my $diald = 0.0;
+  if ($dial =~ /^ *-/)
+  {
+    $dial = ': disabled'
+  }
+  else
+  {
+    $dial =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or api_error 'if2';
+    $diald = $4;
+    $dial = " till: $3-$2-$1 (" . number_of_days($diald) . ' left)';
+  }
   defined $balance or api_error 'if4d';
-  $balance =~ /^ *([0-9]+),([0-9]+) .*$/ or api_error 'if4';
+  $balance =~ /^ *(\d+),(\d+) .*$/ or api_error 'if4';
   $balance =~ s//$1.$2/;
-  my $balanced = sprintf '%.2f', (0.0 + $balance) / $diald;
+  my $balance_per_day = '';
+  $balance_per_day = sprintf ' (%.2f PLN per day)', (0.0 + $balance) / $diald if $diald > 0;
   print 
     "Phone number: $pn\n",
     "Rates: $rates\n",
-    "Receiving calls till: $recv ($recvd days)\n",
-    "Dialing calls till: $dial ($diald days)\n",
-    "Balance: $balance PLN ($balanced PLN per day)\n";
+    "Receiving calls$recv\n",
+    "Dialing calls$dial\n",
+    "Balance: $balance PLN$balance_per_day\n";
 }
 elsif ($action == ACTION_SENT || $action == ACTION_INBOX)
 {
@@ -358,7 +390,7 @@ elsif ($action == ACTION_SENT || $action == ACTION_INBOX)
 
   my $pg;
   $pg = 'sentmessageslist' if $action == ACTION_SENT;
-  $pg = 'messageslist' if $action == ACTION_INBOX;
+  $pg = "messageslist&mbox_folder=$folder" if $action == ACTION_INBOX;
   $res = lwp_visit $ua, "http://www.orange.pl/portal/map/map/message_box?mbox_view=$pg";
   $_ = $res->content;
   s/\s+/ /g;
@@ -372,10 +404,14 @@ elsif ($action == ACTION_SENT || $action == ACTION_INBOX)
  
   while ($#list >= 4 && $list_limit > 0)
   {
-    shift @list; shift @list;
+    my $type = shift @list;
+    $type =~ m{/(.+?)\.gif"} or api_error 'l5';
+    print "Type: $1\n";
+    shift @list;
     my $url = shift @urls;
     api_error 'l3' if $url ne shift @urls;
-    my $cname = resolve_number shift @list;
+    my $cname = shift @list;
+    $cname = resolve_number $cname if $cname =~ /^\+?\d+$/;
     my $text = shift @list;
     decode_entities($text);
     $text = decode('UTF-8', $text);
@@ -397,10 +433,12 @@ elsif ($action == ACTION_SENT || $action == ACTION_INBOX)
       require Text::Wrap; import Text::Wrap qw(wrap);
       $res = lwp_visit $ua, "http://www.orange.pl$url";
       $_ = $res->content;
-      api_error 'l4' unless m{<div class="message-body"><pre>(.*)</pre></div>}s;
-      $text = decode_entities($1);
-      $text = decode('UTF-8', $text);
-      $text = "\n" . wrap("  ", "  ", $text);
+      if (m{<div class="message-body"><pre>(.*)</pre></div>}s)
+      {
+        $text = decode_entities($1);
+        $text = decode('UTF-8', $text);
+        $text = "\n" . wrap("  ", "  ", $text);
+      }
     }
     print "Contents: $text\n\n";
     $list_limit--;
@@ -483,4 +521,4 @@ You may redistribute copies of B<orange-pl> under the terms of the GNU General P
 
 =cut
 
-# vim:ts=2 sw=2 et
+vim:ts=2 sw=2 et

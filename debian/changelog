@@ -1,3 +1,11 @@
+orange-pl (1:0.5) unstable; urgency=low
+
+  * Action '-i': support for disabled dialing/receiving calls.
+  * Action '-m': support for choosing different folder.
+  * Actions '-l', '-m': support for displaying e-mails.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Mon,  4 Sep 2006 13:54:22 +0200
+
 orange-pl (1:0.4) unstable; urgency=low
 
   * Make 'RejectUnperson' and 'UseSSL' configuration options actually work.
