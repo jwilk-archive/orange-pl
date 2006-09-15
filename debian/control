@@ -8,5 +8,5 @@ Bugs: mailto:ubanus@users.sf.net
 
 Package: orange-pl
 Architecture: all
-Depends: ${perl:Depends}, ${misc:Depends}, libwww-perl, libcrypt-ssleay-perl, libhtml-parser-perl, libapache-configfile-perl, konwert
+Depends: ${perl:Depends}, ${misc:Depends}, libwww-perl, libcrypt-ssleay-perl, libhtml-parser-perl, libapache-configfile-perl, libtext-unidecode-perl
 Description: Send SMs via orange.pl gateway

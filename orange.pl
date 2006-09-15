@@ -62,17 +62,9 @@ sub expand_tilde($)
 
 sub transliterate($)
 {
-  require IPC::Open3;
-  local $/;
+  require Text::Unidecode;
   my ($text) = @_;
-  $text ne '' or return '';
-  my $pid = IPC::Open3::open3(\*TEXT, \*TEXT_ASCII, undef, '/usr/bin/konwert', 'utf8-ascii') or quit q{Can't invoke `konwert'};
-  binmode(TEXT, ':encoding(utf-8)');
-  print TEXT $text;
-  close TEXT;
-  $text = <TEXT_ASCII>;
-  close TEXT_ASCII;
-  waitpid $pid, 0;
+  Text::Unidecode::unidecode($text);
   return $text;
 }
 
@@ -127,8 +119,8 @@ sub resolve_person($)
     $number = $recipient;
   }
   quit 'No such recipient' unless $number =~ /^(?:\+?48)?(\d{9})$|^(\d{11})$/;
-  $number = $3 if defined $3;
   $number = $2 if defined $2;
+  $number = $1 if defined $1;
   $recipient = resolve_number($number);
   quit 'No such recipient' unless defined $recipient;
   return ($number, $recipient);

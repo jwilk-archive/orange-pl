@@ -1,3 +1,9 @@
+orange-pl (1:0.6) unstable; urgency=low
+
+  * Use Text::Unidecode instead of konwert. 
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Fri, 15 Sep 2006 08:52:02 +0200
+
 orange-pl (1:0.5) unstable; urgency=low
 
   * Action '-i': support for disabled dialing/receiving calls.
