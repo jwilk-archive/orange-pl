@@ -7,7 +7,7 @@ use HTTP::Request::Common qw(GET POST);
 use Getopt::Long qw(:config gnu_getopt no_ignore_case);
 use Pod::Usage qw(pod2usage);
 
-our $VERSION = '0.5';
+our $VERSION = '0.6';
 my $site = 'orange.pl';
 my $software_name = 'orange-pl';
 my $config_file = 'orange-pl.conf';
@@ -189,6 +189,18 @@ my $home = exists $ENV{$env} ? $ENV{$env} : "$ENV{'HOME'}/.$software_name/";
 chdir $home or quit "Can't change working directory to $home";
 
 my $ua = lwp_init();
+
+END
+{
+  $ua->cookie_jar->scan(
+    sub
+    {
+      my ($version, $key, $val, $path, $domain, $port, $path_spec, $secure, $expires, $discard) = @_;
+      return unless $domain eq COOKIE_DOMAIN;
+      $ua->cookie_jar->set_cookie($version, $key, $val, $path, $domain, $port, $path_spec, $secure, 86400, $discard) unless defined $expires;
+    }
+  );
+}
 
 my $login = '';
 my $password;
@@ -397,7 +409,7 @@ elsif ($action == ACTION_SENT || $action == ACTION_INBOX)
   while ($#list >= 4 && $list_limit > 0)
   {
     my $type = shift @list;
-    $type =~ m{/(.+?)\.gif"} or api_error 'l5';
+    $type =~ m{([^/]*)\.gif"} or api_error 'l5';
     print "Type: $1\n";
     shift @list;
     my $url = shift @urls;
