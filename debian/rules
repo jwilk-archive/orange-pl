@@ -18,6 +18,7 @@ install: build
 	dh_testroot
 	dh_clean -k 
 	dh_install orange.pl usr/bin
+	sed -i -e 's/kawute/Net::kawute/g' debian/orange-pl/usr/bin/*
 	dh_installman --language=C $(wildcard *.1)
 
 binary-indep: build install

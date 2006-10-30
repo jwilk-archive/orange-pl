@@ -1,3 +1,10 @@
+orange-pl (1:0.8) unstable; urgency=low
+
+  * Rewritten using kawute, the codebase for sending SMs.
+  * Support for multiple accounts.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Mon, 30 Oct 2006 20:33:41 +0100
+
 orange-pl (1:0.7) unstable; urgency=low
 
   * Expire session cookies once a day.
