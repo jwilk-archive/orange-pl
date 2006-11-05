@@ -7,7 +7,7 @@ package OrangePl;
 
 use base qw(kawute);
 
-our $VERSION = '0.8';
+our $VERSION = '0.8.1';
 
 sub version($) { $OrangePl::VERSION; }
 sub site($) { 'orange.pl'; }
@@ -98,9 +98,10 @@ sub main($)
   &{$action}();
 }
 
-sub DESTROY($)
+sub END()
+# FIXME: This does not inherit well... :/
 {
-  my ($this) = @_;
+  my $this = __PACKAGE__;
   $ua->cookie_jar->scan(
     sub
     {

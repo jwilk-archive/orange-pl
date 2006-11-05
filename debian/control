@@ -8,5 +8,5 @@ Bugs: mailto:ubanus@users.sf.net
 
 Package: orange-pl
 Architecture: all
-Depends: kawute (>= 0.8)
+Depends: kawute (>= 0.8), libcrypt-ssleay-perl
 Description: Send SMs via orange.pl gateway

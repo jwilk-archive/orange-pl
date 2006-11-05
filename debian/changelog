@@ -1,3 +1,10 @@
+orange-pl (1:0.8.1) unstable; urgency=low
+
+  * Depend on libcrypt-ssleay-perl (this fixes a regression of 0.8).
+  * Expire session cookies once a day (this fixes another regression of 0.8).
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Sun,  5 Nov 2006 22:02:01 +0100
+
 orange-pl (1:0.8) unstable; urgency=low
 
   * Rewritten using kawute, the codebase for sending SMs.
