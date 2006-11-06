@@ -1,3 +1,9 @@
+orange-pl (1:0.8.2) unstable; urgency=low
+
+  * Do not warn on early failure (this fixes a fix a regression of 0.8). 
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Mon,  6 Nov 2006 20:54:43 +0100
+
 orange-pl (1:0.8.1) unstable; urgency=low
 
   * Depend on libcrypt-ssleay-perl (this fixes a regression of 0.8).

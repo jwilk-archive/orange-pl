@@ -102,6 +102,7 @@ sub END()
 # FIXME: This does not inherit well... :/
 {
   my $this = __PACKAGE__;
+  return unless defined $ua;
   $ua->cookie_jar->scan(
     sub
     {
