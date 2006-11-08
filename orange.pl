@@ -7,7 +7,7 @@ package OrangePl;
 
 use base qw(kawute);
 
-our $VERSION = '0.8.1';
+our $VERSION = '0.8.3';
 
 sub version($) { $OrangePl::VERSION; }
 sub site($) { 'orange.pl'; }
@@ -293,7 +293,7 @@ sub action_send($)
 {
   my ($this) = @_;
   
-  pod2usage(1) if $#ARGV != 1;
+  $this->pod2usage(1) if $#ARGV != 1;
 
   require Encode;
   require Text::Wrap;

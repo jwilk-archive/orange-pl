@@ -1,3 +1,10 @@
+orange-pl (1:0.8.3) unstable; urgency=low
+
+  * Show usage if too many arguments were provided (yet another regression of
+    0.8...).
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Wed,  8 Nov 2006 22:49:53 +0100
+
 orange-pl (1:0.8.2) unstable; urgency=low
 
   * Do not warn on early failure (this fixes a fix a regression of 0.8). 
