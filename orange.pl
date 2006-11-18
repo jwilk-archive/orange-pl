@@ -46,6 +46,7 @@ my $folder = 'INBOX';
 my $login = '';
 my $password;
 my $ua;
+my $proto = 'https';
 
 sub main($)
 {
@@ -90,6 +91,8 @@ sub main($)
         require MIME::Base64;
         $password = MIME::Base64::decode(shift);
       },
+    'usessl' => sub 
+      { $proto = shift() ? 'https' : 'http'; },
   );
   $this->reject_unpersons(0) if $this->force();
   $this->quit('No login name provided') unless length $login > 0;
@@ -132,7 +135,7 @@ sub do_login($)
   my ($this) = @_;
   $ua = $this->lwp_init();
   my $res;
-  my $signin_uri = 'http://www.orange.pl/portal/map/map/signin';
+  my $signin_uri = "$proto://www.orange.pl/portal/map/map/signin";
   $res = $this->lwp_visit($ua, $signin_uri);
   unless ($res->content =~ /zalogowany jako/i)
   {
@@ -142,8 +145,8 @@ sub do_login($)
     my $req = $this->lwp_post($uri, 
       [
         "$a.login" => ' ', "$a.login.x" => 0, "$a.login.y" => 0,
-        "$a.loginErrorURL" => 'http://www.orange.pl/portal/map/map/signin',
-        "$a.loginSuccessURL" => 'http://www.orange.pl/portal/map/map/pim',
+        "$a.loginErrorURL" => "$proto://www.orange.pl/portal/map/map/signin",
+        "$a.loginSuccessURL" => "$proto://www.orange.pl/portal/map/map/pim",
         "$a.value.login" => $login, "$a.value.password" => $password,
         "_D:$a.login" => ' ', "_D:$a.loginErrorURL" => ' ', "_D:$a.loginSuccessURL" => ' ',
         "_D:$a.value.login" => ' ', "_D:$a.value.password" => ' ',
@@ -156,7 +159,7 @@ sub do_login($)
     $this->quit('Login error: incorrect password, I guess...') unless $res->content =~ /zalogowany jako/i;
   }
   $this->debug_print('Logged in!');
-  $res = $this->lwp_visit($ua, 'http://www.orange.pl/portal/map/map/message_box');
+  $res = $this->lwp_visit($ua, "$proto://www.orange.pl/portal/map/map/message_box");
   return $this->extract_remaining($res->content);
 }
 
@@ -171,8 +174,7 @@ sub action_info($)
 {
   my ($this) = @_;
   $this->do_login();
-  my $uri = 'http://online.orange.pl/portal/ecare';
-  my $res = $this->lwp_visit($ua, $uri);
+  my $res = $this->lwp_visit($ua, "$proto://online.orange.pl/portal/ecare");
   $_ = $res->content;
   s/\s+/ /g;
   $this->api_error('i1') unless m{<div id="tbl-list3">.*?<table>(.*?)</table>};
@@ -180,21 +182,21 @@ sub action_info($)
   my ($pn, $rates, $dial, $recv, $balance) = m{<td class="value(?:-orange)??">(.*?)</td>}sg;
   defined $pn or $this->api_error('if0d');
   $pn =~ s/ //g;
-  $pn =~ '^\d+$' or $this->api_error($1);
-  defined $rates or $this->api_error($1);
+  $pn =~ '^\d+$' or $this->api_error('if0');
+  defined $rates or $this->api_error('if1d');
   $rates =~ s/^ +//g;
   $rates =~ s/ +$//g;
-  defined $recv or $this->api_error($1);
+  defined $recv or $this->api_error('if3d');
   if ($recv =~ /^ *-/)
   {
     $recv = ': disabled';
   }
   else
   {
-    $recv =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or $this->api_error($1);
+    $recv =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('if3');
     $recv = " till: $3-$2-$1 (" . number_of_days($4) . ' left)';
   }
-  defined $dial or $this->api_error($1);
+  defined $dial or $this->api_error('if2d');
   my $diald = 0.0;
   if ($dial =~ /^ *-/)
   {
@@ -202,12 +204,12 @@ sub action_info($)
   }
   else
   {
-    $dial =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+).*/ or $this->api_error($1);
+    $dial =~ /^ *do (\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('if2');
     $diald = $4;
     $dial = " till: $3-$2-$1 (" . number_of_days($diald) . ' left)';
   }
-  defined $balance or $this->api_error($1);
-  $balance =~ /^ *(\d+),(\d+) .*$/ or $this->api_error($1);
+  defined $balance or $this->api_error('if4d');
+  $balance =~ /^ *(\d+),(\d+) .*$/ or $this->api_error('if4');
   $balance =~ s//$1.$2/;
   my $balance_per_day = '';
   $balance_per_day = sprintf ' (%.2f PLN per day)', (0.0 + $balance) / $diald if $diald > 0;
@@ -217,6 +219,24 @@ sub action_info($)
     "Receiving calls$recv\n",
     "Dialing calls$dial\n",
     "Balance: $balance PLN$balance_per_day\n";
+  $res = $this->lwp_visit($ua, "$proto://online.orange.pl/portal/ecare/packages");
+  $_ = $res->content;
+  if (m{<div class="package-title"><span>Orange SMS/MMS</span></div>\s*<div.*?>.*?<strong>(.*?)</strong>\s*</div>\s*<div class="package-date">(.*?)</div>}s)
+  {
+    my $n = $1;
+    my $expiry = $2;
+    $n =~ m{^\s*(\d+)\s+SMS\s*&nbsp;\s*(\d+)\s+MMS\s*$} or $this->api_error('ip1');
+    my $m = $2;
+    $n = $1;
+    $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('ip2');
+    $expiry = "$3-$2-$1";
+    print "Package: $n SMs or $m MMs\n";
+    print "Package valid till: $expiry\n";
+  }
+  else
+  {
+    print "No SMS packages available.\n";
+  }
 }
 
 sub action_list($$)
@@ -235,7 +255,7 @@ sub action_list($$)
   my $pg;
   $pg = 'sentmessageslist' if $sentbox;
   $pg = "messageslist&mbox_folder=$folder" unless $sentbox;
-  my $res = $this->lwp_visit($ua, "http://www.orange.pl/portal/map/map/message_box?mbox_view=$pg");
+  my $res = $this->lwp_visit($ua, "$proto://www.orange.pl/portal/map/map/message_box?mbox_view=$pg");
   $_ = $res->content;
   s/\s+/ /g;
   $this->api_error('l1') unless m{<table id="list">(.*?)</table>};
@@ -249,7 +269,7 @@ sub action_list($$)
   while ($#list >= 4 && $list_limit > 0)
   {
     my $type = shift @list;
-    $type =~ m{([^/]*)\.gif"} or $this->api_error($1);
+    $type =~ m{([^/]*)\.gif"} or $this->api_error('l5');
     print "Type: $1\n";
     shift @list;
     my $url = shift @urls;
@@ -275,7 +295,7 @@ sub action_list($$)
     if ($list_expand)
     {
       require Text::Wrap; import Text::Wrap qw(wrap);
-      $res = $this->lwp_visit($ua, "http://www.orange.pl$url");
+      $res = $this->lwp_visit($ua, "$proto://www.orange.pl$url");
       $_ = $res->content;
       if (m{<div class="message-body"><pre>(.*)</pre></div>}s)
       {
@@ -316,10 +336,10 @@ sub action_send($)
 
   my $remaining = $this->do_login();
   $this->quit('Message limit exceeded') if $remaining == 0;
-  my $newmsg_uri = 'http://www.orange.pl/portal/map/map/message_box?mbox_view=newsms&mbox_edit=new';
+  my $newmsg_uri = "$proto://www.orange.pl/portal/map/map/message_box?mbox_view=newsms&mbox_edit=new";
   my $res = $this->lwp_visit($ua, $newmsg_uri);
   $this->debug_print('Ready to send...');
-  my $uri = 'http://www.orange.pl/portal/map/map/message_box??_DARGS=/gear/mapmessagebox/smsform.jsp';
+  my $uri = "$proto://www.orange.pl/portal/map/map/message_box??_DARGS=/gear/mapmessagebox/smsform.jsp";
   my $a = '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler';
   my $req = $this->lwp_post($uri, 
     [

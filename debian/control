@@ -1,6 +1,6 @@
 Source: orange-pl
 Section: net
-Priority: optional
+Priority: extra
 Maintainer: Jakub Wilk <ubanus@users.sf.net>
 Build-Depends: debhelper (>= 5), perl
 Standards-Version: 3.7.2

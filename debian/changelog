@@ -1,3 +1,11 @@
+orange-pl (1:0.8.4) unstable; urgency=low
+
+  * Use SSL eagerly.
+  * Fix some API error messages (yes, that was a regression of 0.8!).
+  * Show the state of SMS packages.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Sat, 18 Nov 2006 12:21:43 +0100
+
 orange-pl (1:0.8.3) unstable; urgency=low
 
   * Show usage if too many arguments were provided (yet another regression of
