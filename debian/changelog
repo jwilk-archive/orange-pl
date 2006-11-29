@@ -1,3 +1,9 @@
+orange-pl (1:0.8.5) unstable; urgency=low
+
+  * Show the additional resources.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Wed, 29 Nov 2006 11:42:37 +0100
+
 orange-pl (1:0.8.4) unstable; urgency=low
 
   * Use SSL eagerly.

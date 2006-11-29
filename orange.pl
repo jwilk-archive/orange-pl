@@ -7,7 +7,7 @@ package OrangePl;
 
 use base qw(kawute);
 
-our $VERSION = '0.8.3';
+our $VERSION = '0.8.5';
 
 sub version($) { $OrangePl::VERSION; }
 sub site($) { 'orange.pl'; }
@@ -220,8 +220,9 @@ sub action_info($)
     "Dialing calls$dial\n",
     "Balance: $balance PLN$balance_per_day\n";
   $res = $this->lwp_visit($ua, "$proto://online.orange.pl/portal/ecare/packages");
-  $_ = $res->content;
-  if (m{<div class="package-title"><span>Orange SMS/MMS</span></div>\s*<div.*?>.*?<strong>(.*?)</strong>\s*</div>\s*<div class="package-date">(.*?)</div>}s)
+  my $package_re_tmp = '<div class="package-title"><span>%s</span></div>\s*<div.*?>.*?<strong>(.*?)</strong>\s*</div>\s*<div class="package-date">(.*?)</div>';
+  my $package_re = sprintf($package_re_tmp, 'Orange SMS/MMS');
+  if ($res->content =~ /$package_re/s)
   {
     my $n = $1;
     my $expiry = $2;
@@ -236,6 +237,17 @@ sub action_info($)
   else
   {
     print "No SMS packages available.\n";
+  }
+  $package_re = sprintf($package_re_tmp, "Dodatkowe \xc5\x9brodki");
+  if ($res->content =~ /$package_re/s)
+  {
+    my $balance = $1;
+    my $expiry = $2;
+    $balance =~ s/^(\d+),(\d+).*/$1.$2/ or $this->api_error('iar1');
+    $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('iar2');
+    $expiry = "$3-$2-$1";
+    print "Additional resources: $balance PLN\n";
+    print "Additional resources valid till: $expiry\n";
   }
 }
 
@@ -301,7 +313,7 @@ sub action_list($$)
       {
         $text = decode_entities($1);
         $text = decode('UTF-8', $text);
-        $text = "\n" . wrap("  ", "  ", $text);
+        $text = "\n" . wrap('  ', '  ', $text);
       }
     }
     print "Contents: $text\n\n";
@@ -329,7 +341,7 @@ sub action_send($)
   ($number, $recipient) = $this->resolve_person($recipient);
   $this->debug_print("Recipient: $recipient");
   $body = $this->transliterate($body);
-  $this->debug_print("Message: \n" . Text::Wrap::wrap("  ", "  ", $body));
+  $this->debug_print("Message: \n" . Text::Wrap::wrap('  ', '  ', $body));
   $body_len = length $body;
   $this->debug_print("Message length: $body_len");
   $this->quit("Message too long ($body_len > 640)") if $body_len > 640;
