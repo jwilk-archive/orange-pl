@@ -10,3 +10,5 @@ Package: orange-pl
 Architecture: all
 Depends: kawute (>= 0.8), libcrypt-ssleay-perl
 Description: Send SMs via orange.pl gateway
+ orange-pl allows you to send SMs via the web-to-SMS gateway at
+ <http://orange.pl/>.

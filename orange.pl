@@ -7,7 +7,7 @@ package OrangePl;
 
 use base qw(kawute);
 
-our $VERSION = '0.8.5';
+our $VERSION = '0.8.6';
 
 sub version($) { $OrangePl::VERSION; }
 sub site($) { 'orange.pl'; }
@@ -56,8 +56,8 @@ sub main($)
     ACTION_VOID   => sub { $this->action_void(); },
     ACTION_SEND   => sub { $this->action_send(); },
     ACTION_COUNT  => sub { $this->action_count(); },
-    ACTION_INBOX  => sub { $this->action_inbox(); },
-    ACTION_SENT   => sub { $this->action_sent(); },
+    ACTION_INBOX  => sub { $this->action_list(0); },
+    ACTION_SENT   => sub { $this->action_list(1); },
     ACTION_INFO   => sub { $this->action_info(); },
     ACTION_LOGOUT => sub { $this->action_logout(); },
   };
@@ -248,6 +248,17 @@ sub action_info($)
     $expiry = "$3-$2-$1";
     print "Additional resources: $balance PLN\n";
     print "Additional resources valid till: $expiry\n";
+  }
+  $package_re = sprintf($package_re_tmp, "\xc5\x9arodki z promocji Darmowy Weekend");
+  if ($res->content =~/$package_re/s)
+  {
+    my $balance = $1;
+    my $expiry = $2;
+    $balance =~ s/^(\d+) min[.] (\d+) s/$1 * 60 + $2/e or $this->api_error('ifw1');
+    $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('ifw2');
+    $expiry = "$3-$2-$1";
+    printf "'Free Weekend' free time: %.1f h\n", (0.0 + $balance) / 60 / 60;
+    print "'Free Weekend' valid till: $expiry\n";
   }
 }
 

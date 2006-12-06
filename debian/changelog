@@ -1,3 +1,9 @@
+orange-pl (1:0.8.6) unstable; urgency=low
+
+  * Fix listing messages (sure, that was a regression of 0.8!).
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Wed,  6 Dec 2006 23:31:24 +0100
+
 orange-pl (1:0.8.5) unstable; urgency=low
 
   * Show the additional resources.
