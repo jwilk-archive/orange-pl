@@ -7,7 +7,7 @@ package OrangePl;
 
 use base qw(kawute);
 
-our $VERSION = '0.8.6';
+our $VERSION = '0.8.7';
 
 sub version($) { $OrangePl::VERSION; }
 sub site($) { 'orange.pl'; }
@@ -229,8 +229,15 @@ sub action_info($)
     $n =~ m{^\s*(\d+)\s+SMS\s*&nbsp;\s*(\d+)\s+MMS\s*$} or $this->api_error('ip1');
     my $m = $2;
     $n = $1;
-    $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('ip2');
-    $expiry = "$3-$2-$1";
+    if ($expiry =~ /^\s*$/)
+    {
+      $expiry = 'expired';
+    }
+    else
+    {
+      $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('ip2');
+      $expiry = "$3-$2-$1";
+    }
     print "Package: $n SMs or $m MMs\n";
     print "Package valid till: $expiry\n";
   }

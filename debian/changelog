@@ -1,3 +1,9 @@
+orange-pl (1:0.8.7) unstable; urgency=low
+
+  * Deal with an expired SMS package.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Mon, 11 Dec 2006 15:51:24 +0100
+
 orange-pl (1:0.8.6) unstable; urgency=low
 
   * Fix listing messages (sure, that was a regression of 0.8!).
