@@ -140,7 +140,7 @@ sub do_login($)
   unless ($res->content =~ /zalogowany jako/i)
   {
     $this->debug_print('Logging in...');
-    my $uri = 'https://www.orange.pl/portal/map/map/signin?_DARGS=/gear/static/signIn.jsp';
+    my $uri = 'https://www.orange.pl/portal/map/map/signin?_DARGS=/gear/static/signInLoginBox.jsp';
     my $a = '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler';
     my $req = $this->lwp_post($uri, 
       [
