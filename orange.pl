@@ -7,6 +7,8 @@ package OrangePl;
 
 use base qw(kawute);
 
+use POSIX qw(mktime ceil);
+
 our $VERSION = '0.8.7';
 
 sub version($) { $OrangePl::VERSION; }
@@ -226,6 +228,7 @@ sub action_info($)
   {
     my $n = $1;
     my $expiry = $2;
+    my $ndays;
     $n =~ m{^\s*(\d+)\s+SMS\s*&nbsp;\s*(\d+)\s+MMS\s*$} or $this->api_error('ip1');
     my $m = $2;
     $n = $1;
@@ -236,7 +239,8 @@ sub action_info($)
     else
     {
       $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('ip2');
-      $expiry = "$3-$2-$1";
+      $ndays = ceil((mktime(0, 0, 0, $1, $2 - 1, $3 - 1900) - time) / 86400.0);
+      $expiry = "$3-$2-$1 (" . number_of_days($ndays) . ' left)';
     }
     print "Package: $n SMs or $m MMs\n";
     print "Package valid till: $expiry\n";
@@ -252,8 +256,11 @@ sub action_info($)
     my $expiry = $2;
     $balance =~ s/^(\d+),(\d+).*/$1.$2/ or $this->api_error('iar1');
     $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('iar2');
-    $expiry = "$3-$2-$1";
-    print "Additional resources: $balance PLN\n";
+    my $ndays = ceil((mktime(0, 0, 0, $1, $2 - 1, $3 - 1900) - time) / 86400.0);
+    my $balance_per_day = '';
+    $balance_per_day = sprintf ' (%.2f PLN per day)', (0.0 + $balance) / $ndays if $ndays > 0;
+    print "Additional resources: $balance PLN$balance_per_day\n";
+    $expiry = "$3-$2-$1 (" . number_of_days($ndays) . ' left)';
     print "Additional resources valid till: $expiry\n";
   }
   $package_re = sprintf($package_re_tmp, "\xc5\x9arodki z promocji Darmowy Weekend");
