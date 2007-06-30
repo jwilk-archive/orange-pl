@@ -181,7 +181,7 @@ sub action_info($)
   s/\s+/ /g;
   $this->api_error('i1') unless m{<div id="tbl-list3">.*?<table>(.*?)</table>};
   $_ = $1;
-  my ($pn, $rates, $dial, $recv, $balance) = m{<td class="value(?:-orange)??">(.*?)</td>}sg;
+  my ($pn, $rates, $dial, $recv, $balance) = m{<td class="value(?:-orange)??"(?: colspan="\d+")??>(.*?)</td>}sg;
   defined $pn or $this->api_error('if0d');
   $pn =~ s/ //g;
   $pn =~ '^\d+$' or $this->api_error('if0');
@@ -229,7 +229,7 @@ sub action_info($)
     my $n = $1;
     my $expiry = $2;
     my $ndays;
-    $n =~ m{^\s*(\d+)\s+SMS\s*&nbsp;\s*(\d+)\s+MMS\s*$} or $this->api_error('ip1');
+    $n =~ m{^\s*(\d+)\s+SMS\s*/\s*(\d+)\s+MMS\s*$} or $this->api_error('ip1');
     my $m = $2;
     $n = $1;
     if ($expiry =~ /^\s*$/)
@@ -254,7 +254,7 @@ sub action_info($)
   {
     my $balance = $1;
     my $expiry = $2;
-    $balance =~ s/^(\d+),(\d+).*/$1.$2/ or $this->api_error('iar1');
+    $balance =~ s/^\s*(\d+),(\d+).*/$1.$2/s or $this->api_error('iar1');
     $expiry =~ /<strong>\s*(\d{2})\.(\d{2})\.(\d{4}) \((\d+)/ or $this->api_error('iar2');
     my $ndays = ceil((mktime(0, 0, 0, $1, $2 - 1, $3 - 1900) - time) / 86400.0);
     my $balance_per_day = '';
