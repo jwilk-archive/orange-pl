@@ -1,3 +1,9 @@
+orange-pl (1:0.8.10) unstable; urgency=low
+
+  * Follow the API changes.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Sat, 30 Jun 2007 21:27:42 +0200
+
 orange-pl (1:0.8.9) unstable; urgency=low
 
   * Action '-i': more information.
