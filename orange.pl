@@ -9,7 +9,7 @@ use base qw(kawute);
 
 use POSIX qw(mktime ceil);
 
-our $VERSION = '0.8.10';
+our $VERSION = '0.8.11';
 
 sub version($) { $OrangePl::VERSION; }
 sub site($) { 'orange.pl'; }
