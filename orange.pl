@@ -181,7 +181,7 @@ sub action_info($)
   s/\s+/ /g;
   $this->api_error('i1') unless m{<div id="tbl-list3">.*?<table>(.*?)</table>};
   $_ = $1;
-  my ($pn, $rates, $dial, $recv, $balance) = m{<td class="value(?:-orange)??"(?: colspan="\d+")??>(.*?)</td>}sg;
+  my ($pn, $rates, $recv, $dial, $balance) = m{<td class="value(?:-orange)??"(?: colspan="\d+")??>(.*?)</td>}sg;
   defined $pn or $this->api_error('if0d');
   $pn =~ s/ //g;
   $pn =~ '^\d+$' or $this->api_error('if0');
