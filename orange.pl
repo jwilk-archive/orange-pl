@@ -118,7 +118,7 @@ sub END()
   );
 }
 
-sub extract_remaining($)
+sub extract_remaining($$)
 {
   (my $this, $_) = @_;
   if (m{<div id="syndication">(.*?)</div>}s)
