@@ -20,6 +20,7 @@ sub cookie_domain($) { '.orange.pl'; }
 sub lwp_init($)
 {
   require Crypt::SSLeay;
+  $ENV{HTTPS_CA_DIR} = '/etc/ssl/certs/' if not defined $ENV{HTTPS_CA_DIR};
   my ($this) = @_;
   my $ua = kawute::lwp_init($this);
   push @{$ua->requests_redirectable}, 'POST';
