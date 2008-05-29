@@ -1,8 +1,14 @@
+orange-pl (1:0.8.13) unstable; urgency=low
+
+  * Use Perl ≥ 5.10.
+
+ -- Jakub Wilk <ubanus@users.sf.net>  Thu, 29 May 2008 14:12:10 +0200
+
 orange-pl (1:0.8.12) unstable; urgency=low
 
   * Verify server SSL certificate.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Fri, 12 Oct 2007 17:26:06 +0200
+ -- Jakub Wilk <ubanus@users.sf.net>  Thu, 29 May 2008 14:12:05 +0200
 
 orange-pl (1:0.8.11) unstable; urgency=low
 
