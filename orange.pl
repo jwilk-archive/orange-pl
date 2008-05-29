@@ -54,27 +54,24 @@ my $proto = 'https';
 sub main($)
 {
   my ($this) = @_;
-  use constant
-  {
-    ACTION_VOID   => sub { $this->action_void(); },
-    ACTION_SEND   => sub { $this->action_send(); },
-    ACTION_COUNT  => sub { $this->action_count(); },
-    ACTION_INBOX  => sub { $this->action_list(0); },
-    ACTION_SENT   => sub { $this->action_list(1); },
-    ACTION_INFO   => sub { $this->action_info(); },
-    ACTION_LOGOUT => sub { $this->action_logout(); },
-  };
-  my $action = ACTION_SEND;
+  my $action_void   = sub { $this->action_void(); };
+  my $action_send   = sub { $this->action_send(); };
+  my $action_count  = sub { $this->action_count(); };
+  my $action_inbox  = sub { $this->action_list(0); };
+  my $action_sent   = sub { $this->action_list(1); };
+  my $action_info   = sub { $this->action_info(); };
+  my $action_logout = sub { $this->action_logout(); };
+  my $action = $action_send;
   $this->get_options(
-    'send|s|S' =>       sub { $action = ACTION_SEND; },
-    'count|c' =>        sub { $action = ACTION_COUNT; },
-    'list-inbox|m:i' => sub { $action = ACTION_INBOX; ($_, $list_limit) = @_; },
-    'list-sent|l:i'  => sub { $action = ACTION_SENT; ($_, $list_limit) = @_; },
+    'send|s|S' =>       sub { $action = $action_send; },
+    'count|c' =>        sub { $action = $action_count; },
+    'list-inbox|m:i' => sub { $action = $action_inbox; ($_, $list_limit) = @_; },
+    'list-sent|l:i'  => sub { $action = $action_sent; ($_, $list_limit) = @_; },
     'expand' =>         \$list_expand,
     'folder=s' =>       \$folder,
-    'info|i' =>         sub { $action = ACTION_INFO; },
-    'logout' =>         sub { $action = ACTION_LOGOUT; },
-    'void' =>           sub { $action = ACTION_VOID; },
+    'info|i' =>         sub { $action = $action_info; },
+    'logout' =>         sub { $action = $action_logout; },
+    'void' =>           sub { $action = $action_void; },
   );
   if (defined $list_limit)
   {
