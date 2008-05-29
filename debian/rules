@@ -27,6 +27,8 @@ binary-indep: build install
 	dh_installchangelogs 
 	dh_installdocs
 	dh_installexamples $(wildcard *.conf)
+	dh_installdirs usr/share/lintian/overrides/
+	echo "orange-pl: script-with-language-extension usr/bin/orange.pl" > debian/orange-pl/usr/share/lintian/overrides/orange-pl
 	dh_compress
 	dh_fixperms
 	dh_perl
