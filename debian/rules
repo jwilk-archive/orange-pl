@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
-configure: ;
+configure:
+	:
 
 build: orange.pl.1
 
@@ -9,35 +10,28 @@ orange.pl.1: orange.pl
 	pod2man -c 'orange-pl manual' $(<) > $(@)
 
 clean:
-	dh_testdir
-	dh_testroot
+	dh $(@)
 	dh_clean $(wildcard *.1)
 
 install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k 
+	dh $(@) --until dh_prep
 	dh_install orange.pl usr/bin
 	sed -i -e 's/kawute/Net::kawute/g' debian/orange-pl/usr/bin/*
 	dh_installman --language=C $(wildcard *.1)
-
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs 
-	dh_installdocs
 	dh_installexamples $(wildcard *.conf)
 	dh_installdirs usr/share/lintian/overrides/
 	echo "orange-pl: script-with-language-extension usr/bin/orange.pl" > debian/orange-pl/usr/share/lintian/overrides/orange-pl
-	dh_compress
-	dh_fixperms
-	dh_perl
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+	dh $(@) --remaining
 
-binary-arch: build install
+binary-indep: install
+	dh $(@)
+
+binary-arch: install
+	:
 
 binary: binary-indep binary-arch
+	:
+
 .PHONY: build clean binary-indep binary-arch binary install configure
+
+# vim:ts=4 sw=4 noet

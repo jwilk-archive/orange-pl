@@ -2,7 +2,7 @@ Source: orange-pl
 Section: net
 Priority: extra
 Maintainer: Jakub Wilk <ubanus@users.sf.net>
-Build-Depends: debhelper (>= 5), perl
+Build-Depends: debhelper (>= 7), perl
 Standards-Version: 3.8.0
 Bugs: mailto:ubanus@users.sf.net
 
