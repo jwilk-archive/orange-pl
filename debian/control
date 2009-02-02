@@ -8,7 +8,7 @@ Bugs: mailto:ubanus@users.sf.net
 
 Package: orange-pl
 Architecture: all
-Depends: kawute (>= 0.8), perl (>= 5.10.0), libcrypt-ssleay-perl
+Depends: ${perl:Depends}, ${misc:Depends}, kawute (>= 0.8), perl (>= 5.10.0), libcrypt-ssleay-perl
 Description: Send SMs via orange.pl gateway
  orange-pl allows you to send SMs via the web-to-SMS gateway at
  <http://orange.pl/>.
