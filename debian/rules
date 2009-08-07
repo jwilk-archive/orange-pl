@@ -1,18 +1,18 @@
 #!/usr/bin/make -f
 
-configure:
-	:
-
-build: orange.pl.1
+.PHONY: build
+build: orange.pl.1 ;
 
 orange.pl.1: orange.pl
 	dh_testdir
 	pod2man -c 'orange-pl manual' $(<) > $(@)
 
+.PHONY: clean
 clean:
 	dh $(@)
 	dh_clean $(wildcard *.1)
 
+.PHONY: install
 install: build
 	dh $(@) --until dh_prep
 	dh_install orange.pl usr/bin
@@ -23,15 +23,14 @@ install: build
 	echo "orange-pl: script-with-language-extension usr/bin/orange.pl" > debian/orange-pl/usr/share/lintian/overrides/orange-pl
 	dh $(@) --remaining
 
+.PHONY: binary-indep
 binary-indep: install
 	dh $(@)
 
-binary-arch: install
-	:
+.PHONY: binary-arch
+binary-arch: install ;
 
-binary: binary-indep binary-arch
-	:
-
-.PHONY: build clean binary-indep binary-arch binary install configure
+.PHONY: binary
+binary: binary-indep binary-arch ;
 
 # vim:ts=4 sw=4 noet
