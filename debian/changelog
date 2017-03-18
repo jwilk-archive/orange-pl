@@ -132,7 +132,7 @@ orange-pl (1:0.3) unstable; urgency=low
 orange-pl (0.20060725) unstable; urgency=low
 
   * Actions -l, -m: allow limit the number of displayed messages
-  * Actions -l, -m: allow to show the full message title with --expand option
+  * Actions -l, -m: allow showing the full message title with --expand option
   * Fix typos in the manual page
   * Slightly clean up some code
 
