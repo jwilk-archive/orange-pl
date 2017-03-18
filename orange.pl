@@ -439,7 +439,7 @@ ORANGEPL_HOME (default: F<$HOME/.orange-pl/>)
 
 =head1 AUTHOR
 
-Written by Jakub Wilk E<lt>ubanus@users.sf.netE<gt>, mainly on 21 Jan 2006.
+Written by Jakub Wilk E<lt>jwilk@jwilk.netE<gt>, mainly on 21 Jan 2006.
 
 =head1 COPYRIGHT
 

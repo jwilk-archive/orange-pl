@@ -2,55 +2,55 @@ orange-pl (1:0.8.13) unstable; urgency=low
 
   * Use Perl ≥ 5.10.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Thu, 29 May 2008 14:12:10 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Thu, 29 May 2008 14:12:10 +0200
 
 orange-pl (1:0.8.12) unstable; urgency=low
 
   * Verify server SSL certificate.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Fri, 12 Oct 2007 17:26:06 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Fri, 12 Oct 2007 17:26:06 +0200
 
 orange-pl (1:0.8.11) unstable; urgency=low
 
   * Follow the API changes.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Tue, 03 Jul 2007 13:28:49 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Tue, 03 Jul 2007 13:28:49 +0200
 
 orange-pl (1:0.8.10) unstable; urgency=low
 
   * Follow the API changes.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sat, 30 Jun 2007 21:27:42 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Sat, 30 Jun 2007 21:27:42 +0200
 
 orange-pl (1:0.8.9) unstable; urgency=low
 
   * Action '-i': more information.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Mon, 18 Jun 2007 13:12:15 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Mon, 18 Jun 2007 13:12:15 +0200
 
 orange-pl (1:0.8.8) unstable; urgency=low
 
   * Follow the API changes.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Wed, 18 Apr 2007 18:48:19 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Wed, 18 Apr 2007 18:48:19 +0200
 
 orange-pl (1:0.8.7) unstable; urgency=low
 
   * Deal with an expired SMS package.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Mon, 11 Dec 2006 15:51:24 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Mon, 11 Dec 2006 15:51:24 +0100
 
 orange-pl (1:0.8.6) unstable; urgency=low
 
   * Fix listing messages (sure, that was a regression of 0.8!).
 
- -- Jakub Wilk <ubanus@users.sf.net>  Wed,  6 Dec 2006 23:31:24 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Wed,  6 Dec 2006 23:31:24 +0100
 
 orange-pl (1:0.8.5) unstable; urgency=low
 
   * Show the additional resources.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Wed, 29 Nov 2006 11:42:37 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Wed, 29 Nov 2006 11:42:37 +0100
 
 orange-pl (1:0.8.4) unstable; urgency=low
 
@@ -58,47 +58,47 @@ orange-pl (1:0.8.4) unstable; urgency=low
   * Fix some API error messages (yes, that was a regression of 0.8!).
   * Show the state of SMS packages.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sat, 18 Nov 2006 12:21:43 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Sat, 18 Nov 2006 12:21:43 +0100
 
 orange-pl (1:0.8.3) unstable; urgency=low
 
   * Show usage if too many arguments were provided (yet another regression of
     0.8...).
 
- -- Jakub Wilk <ubanus@users.sf.net>  Wed,  8 Nov 2006 22:49:53 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Wed,  8 Nov 2006 22:49:53 +0100
 
 orange-pl (1:0.8.2) unstable; urgency=low
 
   * Do not warn on early failure (this fixes a fix a regression of 0.8). 
 
- -- Jakub Wilk <ubanus@users.sf.net>  Mon,  6 Nov 2006 20:54:43 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Mon,  6 Nov 2006 20:54:43 +0100
 
 orange-pl (1:0.8.1) unstable; urgency=low
 
   * Depend on libcrypt-ssleay-perl (this fixes a regression of 0.8).
   * Expire session cookies once a day (this fixes another regression of 0.8).
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sun,  5 Nov 2006 22:02:01 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Sun,  5 Nov 2006 22:02:01 +0100
 
 orange-pl (1:0.8) unstable; urgency=low
 
   * Rewritten using kawute, the codebase for sending SMs.
   * Support for multiple accounts.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Mon, 30 Oct 2006 20:33:41 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Mon, 30 Oct 2006 20:33:41 +0100
 
 orange-pl (1:0.7) unstable; urgency=low
 
   * Expire session cookies once a day.
   * Display message type properly.  
 
- -- Jakub Wilk <ubanus@users.sf.net>  Wed, 25 Oct 2006 11:23:49 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Wed, 25 Oct 2006 11:23:49 +0200
 
 orange-pl (1:0.6) unstable; urgency=low
 
   * Use Text::Unidecode instead of konwert. 
 
- -- Jakub Wilk <ubanus@users.sf.net>  Fri, 15 Sep 2006 08:52:02 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Fri, 15 Sep 2006 08:52:02 +0200
 
 orange-pl (1:0.5) unstable; urgency=low
 
@@ -106,7 +106,7 @@ orange-pl (1:0.5) unstable; urgency=low
   * Action '-m': support for choosing different folder.
   * Actions '-l', '-m': support for displaying e-mails.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Mon,  4 Sep 2006 13:54:22 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Mon,  4 Sep 2006 13:54:22 +0200
 
 orange-pl (1:0.4) unstable; urgency=low
 
@@ -114,7 +114,7 @@ orange-pl (1:0.4) unstable; urgency=low
   * New configuration option: 'UseBell'.
   * Action '-i': deal with an API weirdness to make it more reliable.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Tue, 22 Aug 2006 09:24:07 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Tue, 22 Aug 2006 09:24:07 +0200
 
 orange-pl (1:0.3) unstable; urgency=low
 
@@ -127,7 +127,7 @@ orange-pl (1:0.3) unstable; urgency=low
   * Change file names:
     - 'orange-pl-cookie-jar.txt' -> 'cookie-jar.txt'
 
- -- Jakub Wilk <ubanus@users.sf.net>  Thu, 27 Jul 2006 12:03:28 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Thu, 27 Jul 2006 12:03:28 +0200
 
 orange-pl (0.20060725) unstable; urgency=low
 
@@ -136,7 +136,7 @@ orange-pl (0.20060725) unstable; urgency=low
   * Fix typos in the manual page
   * Slightly clean up some code
 
- -- Jakub Wilk <ubanus@users.sf.net>  Tue, 25 Jul 2006 08:28:50 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Tue, 25 Jul 2006 08:28:50 +0200
 
 orange-pl (0.20060722) unstable; urgency=low
 
@@ -145,20 +145,20 @@ orange-pl (0.20060722) unstable; urgency=low
     debug in enabled.
   * More verbose 'API error' errors.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sat, 22 Jul 2006 11:31:36 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Sat, 22 Jul 2006 11:31:36 +0200
 
 orange-pl (0.20060715-1) unstable; urgency=low
 
   * Re-include 'copyright' file. 
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sun, 16 Jul 2006 20:32:30 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Sun, 16 Jul 2006 20:32:30 +0200
 
 orange-pl (0.20060715) unstable; urgency=low
 
   * Document 'orange-pl.conf' and 'phonebook' file formats.
   * Actions -l, -m: don't require the phonebook to be available.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sat, 15 Jul 2006 10:42:48 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Sat, 15 Jul 2006 10:42:48 +0200
 
 orange-pl (0.20060714) unstable; urgency=low
 
@@ -173,48 +173,48 @@ orange-pl (0.20060714) unstable; urgency=low
   * Action -s: resolve phone numbers using phoneboook entries with 'place'
     field set to '<mbox>'.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Fri, 14 Jul 2006 13:41:04 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Fri, 14 Jul 2006 13:41:04 +0200
 
 orange-pl (0.20060712) unstable; urgency=low
 
   * Action -i: Follow the API change.
   * New action: -m.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Wed, 12 Jul 2006 11:36:14 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Wed, 12 Jul 2006 11:36:14 +0200
 
 orange-pl (0.20060628) unstable; urgency=low
 
   * Follow the API change.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Wed, 28 Jun 2006 11:05:36 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Wed, 28 Jun 2006 11:05:36 +0200
 
 orange-pl (0.20060411) unstable; urgency=low
 
   * Action -l: decode HTML entities.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Tue, 11 Apr 2006 10:45:33 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Tue, 11 Apr 2006 10:45:33 +0200
 
 orange-pl (0.20060407) unstable; urgency=low
 
   * Action -l: correct encoding conversion;
   * Action -i: provide more information.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Fri,  7 Apr 2006 12:09:04 +0200
+ -- Jakub Wilk <jwilk@jwilk.net>  Fri,  7 Apr 2006 12:09:04 +0200
 
 orange-pl (0.20060218) unstable; urgency=low
 
   * Action -S: don't require valid phonebook entry.
  
- -- Jakub Wilk <ubanus@users.sf.net>  Sat, 18 Mar 2006 13:59:43 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Sat, 18 Mar 2006 13:59:43 +0100
 
 orange-pl (0.20060211-1) unstable; urgency=low
 
   * Architecture: any -> all.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sat, 11 Mar 2006 16:18:16 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Sat, 11 Mar 2006 16:18:16 +0100
 
 orange-pl (0.20060211) unstable; urgency=low
 
   * Initial release.
 
- -- Jakub Wilk <ubanus@users.sf.net>  Sat, 11 Feb 2006 19:50:04 +0100
+ -- Jakub Wilk <jwilk@jwilk.net>  Sat, 11 Feb 2006 19:50:04 +0100
