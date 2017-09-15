@@ -69,7 +69,7 @@ orange-pl (1:0.8.3) unstable; urgency=low
 
 orange-pl (1:0.8.2) unstable; urgency=low
 
-  * Do not warn on early failure (this fixes a fix a regression of 0.8). 
+  * Do not warn on early failure (this fixes a fix a regression of 0.8).
 
  -- Jakub Wilk <jwilk@jwilk.net>  Mon,  6 Nov 2006 20:54:43 +0100
 
@@ -90,13 +90,13 @@ orange-pl (1:0.8) unstable; urgency=low
 orange-pl (1:0.7) unstable; urgency=low
 
   * Expire session cookies once a day.
-  * Display message type properly.  
+  * Display message type properly.
 
  -- Jakub Wilk <jwilk@jwilk.net>  Wed, 25 Oct 2006 11:23:49 +0200
 
 orange-pl (1:0.6) unstable; urgency=low
 
-  * Use Text::Unidecode instead of konwert. 
+  * Use Text::Unidecode instead of konwert.
 
  -- Jakub Wilk <jwilk@jwilk.net>  Fri, 15 Sep 2006 08:52:02 +0200
 
@@ -149,7 +149,7 @@ orange-pl (0.20060722) unstable; urgency=low
 
 orange-pl (0.20060715-1) unstable; urgency=low
 
-  * Re-include 'copyright' file. 
+  * Re-include 'copyright' file.
 
  -- Jakub Wilk <jwilk@jwilk.net>  Sun, 16 Jul 2006 20:32:30 +0200
 
@@ -204,7 +204,7 @@ orange-pl (0.20060407) unstable; urgency=low
 orange-pl (0.20060218) unstable; urgency=low
 
   * Action -S: don't require valid phonebook entry.
- 
+
  -- Jakub Wilk <jwilk@jwilk.net>  Sat, 18 Mar 2006 13:59:43 +0100
 
 orange-pl (0.20060211-1) unstable; urgency=low

@@ -82,16 +82,16 @@ sub main($)
   $this->go_home();
   $this->read_config
   (
-    'login' => sub 
+    'login' => sub
       { $login = shift; },
-    'password' => sub 
+    'password' => sub
       { $password = shift; },
     'password64' => sub
-      { 
+      {
         require MIME::Base64;
         $password = MIME::Base64::decode(shift);
       },
-    'usessl' => sub 
+    'usessl' => sub
       { $proto = shift() ? 'https' : 'http'; },
   );
   $this->reject_unpersons(0) if $this->force();
@@ -142,7 +142,7 @@ sub do_login($)
     $this->debug_print('Logging in...');
     my $uri = 'https://www.orange.pl/portal/map/map/signin?_DARGS=/gear/static/signInLoginBox.jsp';
     my $a = '/amg/ptk/map/core/formhandlers/AdvancedProfileFormHandler';
-    my $req = $this->lwp_post($uri, 
+    my $req = $this->lwp_post($uri,
       [
         "$a.login" => ' ', "$a.login.x" => 0, "$a.login.y" => 0,
         "$a.loginErrorURL" => "$proto://www.orange.pl/portal/map/map/signin",
@@ -213,7 +213,7 @@ sub action_info($)
   $balance =~ s//$1.$2/;
   my $balance_per_day = '';
   $balance_per_day = sprintf ' (%.2f PLN per day)', (0.0 + $balance) / $diald if $diald > 0;
-  print 
+  print
     "Phone number: $pn\n",
     "Rates: $rates\n",
     "Receiving calls$recv\n",
@@ -278,7 +278,7 @@ sub action_list($$)
 {
   require Encode; import Encode qw(decode);
   require HTML::Entities; import HTML::Entities qw(decode_entities);
-  
+
   my ($this, $sentbox) = @_;
 
   $this->do_login();
@@ -300,7 +300,7 @@ sub action_list($$)
   my @urls = m{(?<=<a href=")/portal/map/map/message_box\?[^"]*(?=">)}g;
   s{</?a.*?>}{}g;
   my @list = m{<td.*?>(.*?)</td>}g;
- 
+
   while ($#list >= 4 && $list_limit > 0)
   {
     my $type = shift @list;
@@ -322,8 +322,8 @@ sub action_list($$)
     if ($sentbox)
     {
       my $status = shift @list;
-      $status = 'sent' if $status =~ /^wys/; 
-      $status = 'awaiting' if $status =~ /^ocz/; 
+      $status = 'sent' if $status =~ /^wys/;
+      $status = 'awaiting' if $status =~ /^ocz/;
       $status = 'delivered' if $status =~ /^dos/;
       print "Status: $status\n";
     }
@@ -347,7 +347,7 @@ sub action_list($$)
 sub action_send($)
 {
   my ($this) = @_;
-  
+
   $this->pod2usage(1) if $#ARGV != 1;
 
   require Encode;
@@ -356,7 +356,7 @@ sub action_send($)
   $this->debug_print("Codeset: $codeset");
   binmode STDERR, ":encoding($codeset)";
   binmode STDOUT, ":encoding($codeset)";
-  
+
   my ($number, $body, $body_len, $recipient);
   ($recipient, $body) = @ARGV;
   $recipient = Encode::decode($codeset, $recipient);
@@ -376,7 +376,7 @@ sub action_send($)
   $this->debug_print('Ready to send...');
   my $uri = "$proto://www.orange.pl/portal/map/map/message_box??_DARGS=/gear/mapmessagebox/smsform.jsp";
   my $a = '/amg/ptk/map/messagebox/formhandlers/MessageFormHandler';
-  my $req = $this->lwp_post($uri, 
+  my $req = $this->lwp_post($uri,
     [
       '_dyncharset' => 'UTF-8',
       "$a.body" => $body,
@@ -384,7 +384,7 @@ sub action_send($)
       "$a.errorURL" => '/portal/map/map/message_box?mbox_view=newsms',
       "$a.successURL" => '/portal/map/map/message_box?mbox_view=messageslist',
       "$a.to" => $number, "$a.type" => 'sms',
-      "_D:$a.body" => ' ', "_D:$a.create" => ' ', "_D:$a.errorURL"  => ' ', 
+      "_D:$a.body" => ' ', "_D:$a.create" => ' ', "_D:$a.errorURL"  => ' ',
       "_D:$a.successURL" => ' ', "_D:$a.to" => ' ', "_D:$a.type" => ' ',
       '_DARGS' => '/gear/mapmessagebox/smsform.jsp',
       'counter' => 640 - $body_len
