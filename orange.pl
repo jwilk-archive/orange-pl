@@ -447,4 +447,4 @@ You may redistribute copies of B<orange-pl> under the terms of the GNU General P
 
 =cut
 
-vim:ts=2 sw=2 et
+vim:ts=2 sts=2 sw=2 et
